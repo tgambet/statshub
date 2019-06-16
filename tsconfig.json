@@ -19,6 +19,14 @@
       "es2018",
       "dom",
       "esnext.asynciterable"
-    ]
+    ],
+    "paths": {
+      "charts4ng": [
+        "dist/charts4ng"
+      ],
+      "charts4ng/*": [
+        "dist/charts4ng/*"
+      ]
+    }
   }
 }
