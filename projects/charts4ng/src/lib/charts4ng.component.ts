@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-  selector: 'lib-charts4ng',
+  selector: 'charts4ng-compo',
   template: `
     <p>
       charts4ng works!

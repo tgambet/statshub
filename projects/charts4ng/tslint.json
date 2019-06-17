@@ -4,13 +4,13 @@
     "directive-selector": [
       true,
       "attribute",
-      "lib",
+      "charts4ng",
       "camelCase"
     ],
     "component-selector": [
       true,
       "element",
-      "lib",
+      "charts4ng",
       "kebab-case"
     ]
   }
