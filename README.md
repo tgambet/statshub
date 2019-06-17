@@ -1,5 +1,7 @@
 # Statshub
 
+![Travis](https://img.shields.io/travis/com/tgambet/statshub.svg?style=flat-square)
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.0.3.
 
 ## Development server
