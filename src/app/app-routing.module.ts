@@ -8,13 +8,23 @@ const appRoutes: Routes = [];
 
 const routes: Routes = [
   {
-    path: '', redirectTo: 'app/', pathMatch: 'full'
+    path: '', redirectTo: 'app', pathMatch: 'full'
   },
   {
-    path: 'login', component: LoginComponent
+    path: 'login',
+    component: LoginComponent
   },
   {
-    path: 'app', component: AppComponent, canActivate: [AuthGuard], children: appRoutes
+    path: 'app',
+    component: AppComponent,
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: '',
+        canActivateChild: [AuthGuard],
+        children: appRoutes
+      }
+    ]
   }
 ];
 

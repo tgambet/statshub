@@ -28,7 +28,7 @@ describe('AuthGuard', () => {
 
       expect(authGuard.canActivate()).toEqual(false);
       expect(authGuard.canActivateChild()).toEqual(false);
-      expect(router.navigate).toHaveBeenCalledWith(['/']);
+      expect(router.navigate).toHaveBeenCalledWith(['/login']);
     });
   });
 });

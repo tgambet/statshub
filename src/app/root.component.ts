@@ -1,16 +1,14 @@
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-root',
   template: `
-    <p>
-      login works!
-    </p>
+    <router-outlet></router-outlet>
   `,
   styles: [],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginComponent implements OnInit {
+export class RootComponent implements OnInit {
 
   constructor() { }
 

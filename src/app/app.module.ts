@@ -1,18 +1,21 @@
-import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
+import {BrowserModule} from '@angular/platform-browser';
+import {HttpClientModule} from '@angular/common/http';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
+import {GraphQLModule} from './graphql.module';
 import {AppRoutingModule} from './app-routing.module';
 import {AppComponent} from './app.component';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {GraphQLModule} from './graphql.module';
-import {HttpClientModule} from '@angular/common/http';
-import {Charts4ngModule} from '../../projects/charts4ng/src/lib/charts4ng.module';
 import {LoginComponent} from './login.component';
+import {RootComponent} from './root.component';
+
+import {Charts4ngModule} from '@charts4ng/charts4ng.module';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LoginComponent
+    LoginComponent,
+    RootComponent
   ],
   imports: [
     BrowserModule,
@@ -23,6 +26,6 @@ import {LoginComponent} from './login.component';
     Charts4ngModule
   ],
   providers: [],
-  bootstrap: [AppComponent]
+  bootstrap: [RootComponent]
 })
 export class AppModule { }
