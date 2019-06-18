@@ -15,8 +15,12 @@ import {AuthService} from './services/auth.service';
     <form [formGroup]="loginForm">
       <mat-form-field appearance="standard">
         <mat-label>Github personal access token</mat-label>
-        <input matInput formControlName="token" type="text" spellcheck="false">
+        <input matInput formControlName="token" [type]="hide ? 'password' : 'text'" spellcheck="false">
         <mat-error *ngIf="f.token.invalid">{{ getErrorMessage(f.token) }}</mat-error>
+        <button mat-icon-button matSuffix
+                (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide" type="button">
+          <mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+        </button>
       </mat-form-field>
       <button type="submit" mat-raised-button color="primary" [disabled]="loading">
         {{ loading ? 'LOADING' : 'LOGIN' }}
@@ -41,8 +45,8 @@ import {AuthService} from './services/auth.service';
       margin-right: 1rem;
     }
     h1 {
-      font-weight: 500;
-      font-size: 48px;
+      font-weight: 700;
+      font-size: 54px;
       margin: 0;
     }
     form {
@@ -66,6 +70,7 @@ import {AuthService} from './services/auth.service';
 })
 export class LoginComponent implements OnInit, OnDestroy {
 
+  hide = true;
   loginForm: FormGroup;
   loading = false;
   formSubscription: Subscription;
