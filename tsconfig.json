@@ -26,7 +26,8 @@
       ],
       "charts4ng/*": [
         "dist/charts4ng/*"
-      ]
+      ],
+      "@env/*": ["src/environments/*"]
     }
   }
 }

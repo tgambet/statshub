@@ -2,11 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": [],
-    "paths": {
-      "@charts4ng/*": ["projects/charts4ng/src/lib/*"],
-      "@env/*": ["src/environments/*"]
-    }
+    "types": []
   },
   "include": [
     "src/**/*.ts"
