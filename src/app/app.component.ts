@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, Component} from '@angular/core';
 import {AuthService} from './services/auth.service';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-app',
   template: `
     <h1>
       Welcome to {{ title }} {{ getName() }}!
