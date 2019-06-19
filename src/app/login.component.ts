@@ -41,13 +41,14 @@ import {AuthService} from './services/auth.service';
       width: 100%;
     }
     app-logo {
-      min-width: 50px;
+      min-width: 60px;
       margin-right: 1rem;
     }
     h1 {
       font-weight: 700;
-      font-size: 54px;
+      font-size: 60px;
       margin: 0;
+      line-height: 1;
     }
     form {
       display: flex;
@@ -106,7 +107,9 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.formSubscription.unsubscribe();
+    if (this.formSubscription) {
+      this.formSubscription.unsubscribe();
+    }
   }
 
   get f() { return this.loginForm.controls; }

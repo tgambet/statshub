@@ -6,7 +6,6 @@ import {ChangeDetectionStrategy, Component} from '@angular/core';
     <h1>
       Welcome to {{ title }}!
     </h1>
-    <charts4ng-compo></charts4ng-compo>
     <router-outlet></router-outlet>
   `,
   styles: [],
