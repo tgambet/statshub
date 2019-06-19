@@ -92,7 +92,7 @@ describe('LoginComponent', () => {
     );
     component.f.token.setValue('invalidToken');
     expect(component.getErrorMessage(component.f.token)).toEqual(
-      'Invalid Github token: Invalid token'
+      'Invalid token'
     );
   });
 

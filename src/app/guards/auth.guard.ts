@@ -1,7 +1,8 @@
 import {Injectable} from '@angular/core';
 import {CanActivate, CanActivateChild, Router, UrlTree} from '@angular/router';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
 import {AuthService} from '../services/auth.service';
+import {catchError, map, tap} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,20 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     if (this.auth.isLoggedIn()) {
       return true;
     } else {
-      this.router.navigate(['/login']);
-      return false;
+      const token = localStorage.getItem('token');
+      if (token !== null) {
+        return this.auth.login(token).pipe(
+          map(() => true),
+          catchError(() => of(false).pipe(
+            tap(() => localStorage.removeItem('token')),
+            tap(() => this.router.navigate(['/login']))
+          ))
+        );
+      } else {
+        return this.router.navigate(['/login']).then(
+          () => false
+        );
+      }
     }
   }
 

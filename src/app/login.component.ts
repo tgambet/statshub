@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, OnDestroy, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
 import {AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators} from '@angular/forms';
 import {Observable, of, Subscription} from 'rxjs';
 import {catchError, map, tap} from 'rxjs/operators';
@@ -79,7 +79,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   constructor(
     private auth: AuthService,
     private formBuilder: FormBuilder,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -102,6 +103,10 @@ export class LoginComponent implements OnInit, OnDestroy {
         if (status === 'PENDING') {
           this.loading = true;
         }
+        if (status === 'INVALID') {
+          this.loading = false;
+        }
+        this.cdr.markForCheck();
       })
     ).subscribe();
   }
@@ -119,7 +124,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       return 'A Github access token is required to use this application';
     }
     if (control.errors.invalid) {
-      return 'Invalid Github token: ' + control.errors.invalid;
+      return control.errors.invalid;
     }
   }
 
@@ -127,7 +132,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     return this.auth.login(control.value).pipe(
       map(() => null),
       catchError(error => of({
-        invalid: error
+        invalid: error.networkError ? error.networkError.message : error
       }))
     );
   }
