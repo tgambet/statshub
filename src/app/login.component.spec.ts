@@ -1,6 +1,6 @@
 import {async, TestBed} from '@angular/core/testing';
 import {EventEmitter} from '@angular/core';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {Observable, of, throwError} from 'rxjs';
 import {delayWhen} from 'rxjs/operators';
 
@@ -12,6 +12,9 @@ import {LogoComponent} from './components/logo.component';
 const respond: EventEmitter<void> = new EventEmitter();
 
 class MockAuthService {
+  isLoggedIn(): boolean {
+    return false;
+  }
   login(token: string): Observable<void> {
     if (token === 'validToken') {
       return of(null).pipe(delayWhen(() => respond.asObservable()));
@@ -19,6 +22,7 @@ class MockAuthService {
       return throwError('Invalid token');
     }
   }
+  logout(): void {}
 }
 
 describe('LoginComponent', () => {
@@ -28,6 +32,7 @@ describe('LoginComponent', () => {
 
   beforeEach(async(() => {
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    const route: ActivatedRoute = { snapshot: { queryParams: {} }} as ActivatedRoute;
     TestBed.configureTestingModule({
       imports: [
         SharedModule
@@ -35,7 +40,8 @@ describe('LoginComponent', () => {
       declarations: [LoginComponent, LogoComponent],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
-        { provide: Router,      useValue: routerSpy }
+        { provide: Router,      useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: route }
       ]
     });
   }));

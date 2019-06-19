@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {CanActivate, CanActivateChild, Router, UrlTree} from '@angular/router';
+import {ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot, UrlTree} from '@angular/router';
 import {Observable, of} from 'rxjs';
 import {AuthService} from '../services/auth.service';
 import {catchError, map, tap} from 'rxjs/operators';
@@ -10,7 +10,10 @@ import {catchError, map, tap} from 'rxjs/operators';
 export class AuthGuard implements CanActivate, CanActivateChild {
   constructor(private auth: AuthService, private router: Router) {}
 
-  canActivate(): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     if (this.auth.isLoggedIn()) {
       return true;
     } else {
@@ -20,19 +23,22 @@ export class AuthGuard implements CanActivate, CanActivateChild {
           map(() => true),
           catchError(() => of(false).pipe(
             tap(() => localStorage.removeItem('token')),
-            tap(() => this.router.navigate(['/login']))
+            tap(() => this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } }))
           ))
         );
       } else {
-        return this.router.navigate(['/login']).then(
+        return this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } }).then(
           () => false
         );
       }
     }
   }
 
-  canActivateChild(): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    return this.canActivate();
+  canActivateChild(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    return this.canActivate(route, state);
   }
 
 }

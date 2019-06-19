@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit
 import {AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators} from '@angular/forms';
 import {Observable, of, Subscription} from 'rxjs';
 import {catchError, map, tap} from 'rxjs/operators';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {AuthService} from './services/auth.service';
 
 @Component({
@@ -80,10 +80,19 @@ export class LoginComponent implements OnInit, OnDestroy {
     private auth: AuthService,
     private formBuilder: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
+    const returnUrl = this.route.snapshot.queryParams.returnUrl || '/';
+
+    if (this.auth.isLoggedIn()) {
+      this.router.navigate([returnUrl], { replaceUrl: true }).catch(
+        () => this.router.navigate(['/'], { replaceUrl: true })
+      );
+    }
+
     this.loginForm = this.formBuilder.group({
       token: [
         '',
@@ -98,7 +107,9 @@ export class LoginComponent implements OnInit, OnDestroy {
       tap(status => {
         if (status === 'VALID') {
           this.loading = false;
-          this.router.navigate(['app']);
+          this.router.navigate([returnUrl], { replaceUrl: true }).catch(
+            () => this.router.navigate(['/'], { replaceUrl: true })
+          );
         }
         if (status === 'PENDING') {
           this.loading = true;
