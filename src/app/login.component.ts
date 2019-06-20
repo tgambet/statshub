@@ -9,12 +9,12 @@ import {AuthService} from './services/auth.service';
   selector: 'app-login',
   template: `
     <header>
-      <app-logo></app-logo>
+      <app-logo width="60" height="60"></app-logo>
       <h1>StatsHub</h1>
     </header>
     <form [formGroup]="loginForm">
       <mat-form-field appearance="standard">
-        <mat-label>Github personal access token</mat-label>
+        <mat-label>GitHub personal access token</mat-label>
         <input matInput formControlName="token" [type]="hide ? 'password' : 'text'" spellcheck="false">
         <mat-error *ngIf="f.token.invalid">{{ getErrorMessage(f.token) }}</mat-error>
         <button mat-icon-button matSuffix
@@ -41,7 +41,6 @@ import {AuthService} from './services/auth.service';
       width: 100%;
     }
     app-logo {
-      min-width: 60px;
       margin-right: 1rem;
     }
     h1 {
@@ -74,7 +73,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   hide = true;
   loginForm: FormGroup;
   loading = false;
-  formSubscription: Subscription;
+  subscription: Subscription = new Subscription();
 
   constructor(
     private auth: AuthService,
@@ -84,18 +83,19 @@ export class LoginComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) { }
 
+  get f() { return this.loginForm.controls; }
+
   ngOnInit() {
     const returnUrl = this.route.snapshot.queryParams.returnUrl || '/';
 
-    if (this.auth.isLoggedIn()) {
+    if (this.auth.isLoggedIn() || localStorage.getItem('token') !== null) {
       this.router.navigate([returnUrl], { replaceUrl: true }).catch(
         () => this.router.navigate(['/'], { replaceUrl: true })
       );
     }
 
     this.loginForm = this.formBuilder.group({
-      token: [
-        '',
+      token: ['',
         {
           validators: [Validators.required],
           asyncValidators: [this.githubTokenValidator.bind(this)],
@@ -103,36 +103,35 @@ export class LoginComponent implements OnInit, OnDestroy {
         }
       ],
     });
-    this.formSubscription = this.loginForm.statusChanges.pipe(
-      tap(status => {
-        if (status === 'VALID') {
-          this.loading = false;
-          this.router.navigate([returnUrl], { replaceUrl: true }).catch(
-            () => this.router.navigate(['/'], { replaceUrl: true })
-          );
-        }
-        if (status === 'PENDING') {
-          this.loading = true;
-        }
-        if (status === 'INVALID') {
-          this.loading = false;
-        }
-        this.cdr.markForCheck();
-      })
-    ).subscribe();
+
+    this.subscription.add(
+      this.loginForm.statusChanges.pipe(
+        tap(status => {
+          if (status === 'VALID') {
+            this.loading = false;
+            this.router.navigate([returnUrl], { replaceUrl: true }).catch(
+              () => this.router.navigate(['/'], { replaceUrl: true })
+            );
+          }
+          if (status === 'PENDING') {
+            this.loading = true;
+          }
+          if (status === 'INVALID') {
+            this.loading = false;
+          }
+          this.cdr.markForCheck();
+        })
+      ).subscribe()
+    );
   }
 
   ngOnDestroy(): void {
-    if (this.formSubscription) {
-      this.formSubscription.unsubscribe();
-    }
+    this.subscription.unsubscribe();
   }
-
-  get f() { return this.loginForm.controls; }
 
   getErrorMessage(control: AbstractControl): string {
     if (control.errors.required) {
-      return 'A Github access token is required to use this application';
+      return 'A GitHub access token is required to use this application';
     }
     if (control.errors.invalid) {
       return control.errors.invalid;

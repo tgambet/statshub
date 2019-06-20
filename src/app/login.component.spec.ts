@@ -7,7 +7,7 @@ import {delayWhen} from 'rxjs/operators';
 import {LoginComponent} from './login.component';
 import {AuthService} from './services/auth.service';
 import {SharedModule} from './shared/shared.module';
-import {LogoComponent} from './components/logo.component';
+import {LogoComponent} from './components/logo/logo.component';
 
 const respond: EventEmitter<void> = new EventEmitter();
 
@@ -68,11 +68,6 @@ describe('LoginComponent', () => {
     expect(component.f.token.updateOn).toEqual('submit');
   });
 
-  it('should subscribe to the form status changes', () => {
-    component.ngOnInit();
-    expect(component.formSubscription).toBeTruthy();
-  });
-
   it('should validate the token control', () => {
     component.ngOnInit();
     component.f.token.setValue('validToken');
@@ -94,7 +89,7 @@ describe('LoginComponent', () => {
     component.f.token.setValue('');
     expect(component.loginForm.valid).toEqual(false);
     expect(component.getErrorMessage(component.f.token)).toEqual(
-      'A Github access token is required to use this application'
+      'A GitHub access token is required to use this application'
     );
     component.f.token.setValue('invalidToken');
     expect(component.getErrorMessage(component.f.token)).toEqual(

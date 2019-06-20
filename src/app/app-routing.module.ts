@@ -3,19 +3,22 @@ import {RouterModule, Routes} from '@angular/router';
 import {AppComponent} from './app.component';
 import {LoginComponent} from './login.component';
 import {AuthGuard} from './guards/auth.guard';
+import {DashboardComponent} from './components/dashboard/dashboard.component';
+import {SearchComponent} from './components/search/search.component';
+import {PageNotFoundComponent} from './components/page-not-found/page-not-found.component';
 
-const appRoutes: Routes = [];
+const appRoutes: Routes = [
+  { path: '', component: SearchComponent },
+  { path: 'repos/:user/:repo', component: DashboardComponent },
+];
 
 const routes: Routes = [
-  {
-    path: '', redirectTo: 'app', pathMatch: 'full'
-  },
   {
     path: 'login',
     component: LoginComponent
   },
   {
-    path: 'app',
+    path: '',
     component: AppComponent,
     canActivate: [AuthGuard],
     children: [
@@ -25,7 +28,8 @@ const routes: Routes = [
         children: appRoutes
       }
     ]
-  }
+  },
+  { path: '**', component: PageNotFoundComponent }
 ];
 
 @NgModule({

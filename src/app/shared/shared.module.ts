@@ -3,7 +3,19 @@ import {CommonModule} from '@angular/common';
 import {ReactiveFormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
-import {MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule} from '@angular/material';
+import {
+  MatButtonModule,
+  MatCardModule,
+  MatFormFieldModule,
+  MatGridListModule,
+  MatIconModule,
+  MatInputModule,
+  MatListModule,
+  MatMenuModule,
+  MatSidenavModule,
+  MatToolbarModule
+} from '@angular/material';
+import {LayoutModule} from '@angular/cdk/layout';
 
 const MODULES = [
   BrowserModule,
@@ -14,6 +26,15 @@ const MODULES = [
   MatInputModule,
   MatIconModule,
   MatButtonModule,
+  MatGridListModule,
+  MatCardModule,
+  MatMenuModule,
+  MatIconModule,
+  MatButtonModule,
+  LayoutModule,
+  MatToolbarModule,
+  MatSidenavModule,
+  MatListModule
 ];
 
 @NgModule({

@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {asapScheduler, defer, Observable, of, scheduled, throwError} from 'rxjs';
-import {filter, first, mergeMap, switchMap, tap} from 'rxjs/operators';
+import {filter, mergeMap, switchMap, tap} from 'rxjs/operators';
 import {Apollo} from 'apollo-angular';
 import gql from 'graphql-tag';
 
@@ -29,9 +29,9 @@ export class AuthService {
     const setToken = defer(() =>
       scheduled([localStorage.setItem('token', token)], asapScheduler)
     );
-    const loginQuery = this.apollo.watchQuery({
+    const login = this.apollo.query({
       query: LOGIN_QUERY
-    }).valueChanges.pipe(
+    }).pipe(
       filter(result => !result.loading),
       switchMap((result) => {
         if (result.errors) {
@@ -40,11 +40,10 @@ export class AuthService {
           return of(result.data);
         }
       }),
-      tap(user => this.user = user),
-      first()
+      tap(user => this.user = user)
     );
     return setToken.pipe(
-      mergeMap(() => loginQuery)
+      mergeMap(() => login)
     );
   }
 
