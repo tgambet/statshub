@@ -1,12 +1,12 @@
 import {ChangeDetectionStrategy, Component} from '@angular/core';
-import {map} from 'rxjs/operators';
+import {map, switchMap} from 'rxjs/operators';
 import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
+import {of} from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   template: `
     <div class="grid-container">
-      <!--<h1 class="mat-h1">Dashboard</h1>-->
       <mat-grid-list cols="4" rowHeight="324px">
         <mat-grid-tile *ngFor="let card of cards | async" [colspan]="card.cols" [rowspan]="card.rows">
           <mat-card class="dashboard-card">
@@ -52,30 +52,49 @@ import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
-  /** Based on the screen size, switch from standard to one column per row */
   cards = this.breakpointObserver.observe([
     Breakpoints.XSmall,
     Breakpoints.Small
   ]).pipe(
-    map(({ matches }) => {
+    switchMap(({ matches }) => {
       if (matches) {
-        return [
-          { title: 'Card 1', cols: 2, rows: 1 },
-          { title: 'Card 2', cols: 2, rows: 1 },
-          { title: 'Card 3', cols: 2, rows: 1 },
-          { title: 'Card 4', cols: 2, rows: 1 }
-        ];
+        return of([
+          { title: 'Information', cols: 4, rows: 1 },
+          { title: 'Issues', cols: 4, rows: 1 },
+          { title: 'Labels', cols: 4, rows: 1 },
+          { title: 'Popularity', cols: 4, rows: 1 },
+          { title: 'Downloads', cols: 4, rows: 1 },
+          { title: 'File explorer', cols: 4, rows: 2 },
+          { title: 'Calendar', cols: 4, rows: 1 },
+        ]);
       }
+      return this.breakpointObserver.observe([
+        Breakpoints.Medium,
+      ]).pipe(
+        map(bp => {
+          if (bp.matches) {
+            return [
+              { title: 'Information', cols: 4, rows: 1 },
+              { title: 'Issues', cols: 2, rows: 1 },
+              { title: 'Labels', cols: 2, rows: 1 },
+              { title: 'Popularity', cols: 2, rows: 1 },
+              { title: 'Downloads', cols: 2, rows: 1 },
+              { title: 'File explorer', cols: 4, rows: 2 },
+              { title: 'Calendar', cols: 4, rows: 1 },
+            ];
+          }
+          return [
+            { title: 'Information', cols: 2, rows: 1 },
+            { title: 'Issues', cols: 1, rows: 1 },
+            { title: 'Labels', cols: 1, rows: 1 },
+            { title: 'Popularity', cols: 1, rows: 1 },
+            { title: 'Downloads', cols: 1, rows: 1 },
+            { title: 'File explorer', cols: 2, rows: 2 },
+            { title: 'Calendar', cols: 2, rows: 1 },
+          ];
+        })
+      );
 
-      return [
-        { title: 'Information', cols: 2, rows: 1 },
-        { title: 'Issues', cols: 1, rows: 1 },
-        { title: 'Labels', cols: 1, rows: 1 },
-        { title: 'Popularity', cols: 1, rows: 1 },
-        { title: 'Downloads', cols: 1, rows: 1 },
-        { title: 'File explorer', cols: 2, rows: 2 },
-        { title: 'Calendar', cols: 2, rows: 1 },
-      ];
     })
   );
 
