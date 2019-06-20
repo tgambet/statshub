@@ -5,9 +5,9 @@ import {Observable, of, throwError} from 'rxjs';
 import {delayWhen} from 'rxjs/operators';
 
 import {LoginComponent} from './login.component';
-import {AuthService} from './services/auth.service';
-import {SharedModule} from './shared/shared.module';
-import {LogoComponent} from './components/logo/logo.component';
+import {AuthService} from '@app/services/auth.service';
+import {SharedModule} from '@app/shared/shared.module';
+import {LogoComponent} from '../logo/logo.component';
 
 const respond: EventEmitter<void> = new EventEmitter();
 

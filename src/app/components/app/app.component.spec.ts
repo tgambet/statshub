@@ -3,8 +3,8 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {AppComponent} from './app.component';
 import {Charts4ngModule} from 'charts4ng';
 import {ApolloTestingModule} from 'apollo-angular/testing';
-import {SharedModule} from './shared/shared.module';
-import {LogoComponent} from './components/logo/logo.component';
+import {SharedModule} from '@app/shared/shared.module';
+import {LogoComponent} from '../logo/logo.component';
 
 describe('AppComponent', () => {
   let component: AppComponent;

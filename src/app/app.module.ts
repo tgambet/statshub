@@ -1,8 +1,8 @@
 import {NgModule} from '@angular/core';
 import {HttpClientModule} from '@angular/common/http';
 
-import {AppComponent} from './app.component';
-import {LoginComponent} from './login.component';
+import {AppComponent} from './components/app/app.component';
+import {LoginComponent} from './components/login/login.component';
 import {RootComponent} from './root.component';
 import {LogoComponent} from './components/logo/logo.component';
 import {DashboardComponent} from './components/dashboard/dashboard.component';

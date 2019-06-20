@@ -3,7 +3,7 @@ import {AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators} f
 import {Observable, of, Subscription} from 'rxjs';
 import {catchError, map, tap} from 'rxjs/operators';
 import {ActivatedRoute, Router} from '@angular/router';
-import {AuthService} from './services/auth.service';
+import {AuthService} from '@app/services/auth.service';
 
 @Component({
   selector: 'app-login',
