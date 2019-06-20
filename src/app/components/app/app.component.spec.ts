@@ -19,7 +19,8 @@ describe('AppComponent', () => {
         SharedModule
       ],
       declarations: [
-        AppComponent, LogoComponent
+        AppComponent,
+        LogoComponent
       ],
     }).compileComponents();
   }));

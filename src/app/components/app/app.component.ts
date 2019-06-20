@@ -1,4 +1,6 @@
 import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {AuthService} from '@app/services/auth.service';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-app',
@@ -9,9 +11,12 @@ import {ChangeDetectionStrategy, Component} from '@angular/core';
       <button class="search" mat-icon-button>
         <mat-icon>search</mat-icon>
       </button>
-      <button class="user-menu" mat-icon-button>
+      <button class="user-menu" mat-icon-button [matMenuTriggerFor]="userMenu">
         <mat-icon>person</mat-icon>
       </button>
+      <mat-menu #userMenu="matMenu">
+        <button mat-menu-item (click)="logout()">LOGOUT</button>
+      </mat-menu>
     </mat-toolbar>
     <router-outlet></router-outlet>
   `,
@@ -37,6 +42,14 @@ import {ChangeDetectionStrategy, Component} from '@angular/core';
 })
 export class AppComponent {
 
-  constructor() {}
+  constructor(
+    private auth: AuthService,
+    private router: Router
+  ) {}
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['login']);
+  }
 
 }
