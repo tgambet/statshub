@@ -3,9 +3,8 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {AppComponent} from './app.component';
 import {Charts4ngModule} from 'charts4ng';
 import {ApolloTestingModule} from 'apollo-angular/testing';
-import {NoopAnimationsModule} from '@angular/platform-browser/animations';
-import {LayoutModule} from '@angular/cdk/layout';
-import {MatButtonModule, MatIconModule, MatListModule, MatSidenavModule, MatToolbarModule} from '@angular/material';
+import {SharedModule} from './shared/shared.module';
+import {LogoComponent} from './components/logo/logo.component';
 
 describe('AppComponent', () => {
   let component: AppComponent;
@@ -17,16 +16,10 @@ describe('AppComponent', () => {
         RouterTestingModule,
         Charts4ngModule,
         ApolloTestingModule,
-        NoopAnimationsModule,
-        LayoutModule,
-        MatButtonModule,
-        MatIconModule,
-        MatListModule,
-        MatSidenavModule,
-        MatToolbarModule,
+        SharedModule
       ],
       declarations: [
-        AppComponent
+        AppComponent, LogoComponent
       ],
     }).compileComponents();
   }));

@@ -1,7 +1,8 @@
 import {fakeAsync, TestBed, tick} from '@angular/core/testing';
 import {ApolloTestingController, ApolloTestingModule} from 'apollo-angular/testing';
 
-import {AuthService, LOGIN_QUERY} from './auth.service';
+import {AuthService} from './auth.service';
+import {ViewerDocument} from '../github.schema';
 
 describe('AuthService', () => {
   let controller: ApolloTestingController;
@@ -32,34 +33,38 @@ describe('AuthService', () => {
   it('should login a user', fakeAsync(() => {
     const service: AuthService = TestBed.get(AuthService);
     service.login('someToken').subscribe(
-      user => expect(user).toEqual({ viewer: { name: 'Thomas' } }),
+      user => expect(user).toEqual({ name: 'Thomas', login: 'tgambet' }),
       error => fail(error)
     );
     tick();
-    const op = controller.expectOne(LOGIN_QUERY);
+    const op = controller.expectOne(ViewerDocument);
     op.flush({
       data : {
         viewer: {
-          name: 'Thomas'
+          name: 'Thomas',
+          login: 'tgambet'
         }
       }
     });
+    tick();
     expect(service.isLoggedIn()).toEqual(true);
-    expect(service.user).toEqual({ viewer: { name: 'Thomas' } });
+    expect(service.user).toEqual({ name: 'Thomas', login: 'tgambet' });
   }));
 
   it('should set the token in local storage when logging a user', fakeAsync(() => {
     const service: AuthService = TestBed.get(AuthService);
     service.login('aToken').subscribe();
     tick();
-    const op = controller.expectOne(LOGIN_QUERY);
+    const op = controller.expectOne(ViewerDocument);
     op.flush({
       data : {
         viewer: {
-          name: 'Thomas'
+          name: 'Thomas',
+          login: 'tgambet'
         }
       }
     });
+    tick();
     expect(localStorage.getItem('token')).toBe('aToken');
   }));
 
@@ -67,14 +72,16 @@ describe('AuthService', () => {
     const service: AuthService = TestBed.get(AuthService);
     service.login('aToken').subscribe();
     tick();
-    const op = controller.expectOne(LOGIN_QUERY);
+    const op = controller.expectOne(ViewerDocument);
     op.flush({
       data : {
         viewer: {
-          name: 'Thomas'
+          name: 'Thomas',
+          login: 'tgambet'
         }
       }
     });
+    tick();
     expect(service.isLoggedIn()).toEqual(true);
 
     service.logout();
