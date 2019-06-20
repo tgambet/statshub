@@ -21,7 +21,7 @@ export class AuthService {
     const setToken = defer(() =>
       scheduled([localStorage.setItem('token', token)], asapScheduler)
     );
-    const login = this.viewerGQL.fetch().pipe(
+    const login = this.viewerGQL.fetch({}, { fetchPolicy: 'network-only'}).pipe(
       filter(result => !result.loading),
       switchMap((result) => {
         if (result.errors) {
