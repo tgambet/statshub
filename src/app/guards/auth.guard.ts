@@ -23,11 +23,17 @@ export class AuthGuard implements CanActivate, CanActivateChild {
           map(() => true),
           catchError(() => of(false).pipe(
             tap(() => localStorage.removeItem('token')),
-            tap(() => this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } }))
+            tap(() => this.router.navigate(
+              ['/login'],
+              { queryParams: { returnUrl: state.url === '/' ? null : state.url } }
+            ))
           ))
         );
       } else {
-        return this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } }).then(
+        return this.router.navigate(
+          ['/login'],
+          { queryParams: { returnUrl: state.url === '/' ? null : state.url } }
+        ).then(
           () => false
         );
       }
