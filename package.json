@@ -8,7 +8,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "generate": "graphql-codegen"
+    "generate": "graphql-codegen",
+    "build-ci": "ng build charts4ng"
   },
   "private": true,
   "dependencies": {
