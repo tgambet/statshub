@@ -1,0 +1,33 @@
+query Repository($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    createdAt
+    description
+    diskUsage
+    forkCount
+    url
+    homepageUrl
+    licenseInfo {
+      name
+      nickname
+    }
+    watchers {
+      totalCount
+    }
+    stargazers {
+      totalCount
+    }
+    object(expression: "master") {
+      ... on Commit {
+        history {
+          totalCount
+        }
+      }
+    }
+    releases {
+      totalCount
+    }
+    refs(refPrefix: "refs/tags/") {
+      totalCount
+    }
+  }
+}

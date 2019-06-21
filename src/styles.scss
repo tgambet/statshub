@@ -102,3 +102,7 @@ body {
 input {
   @include cdk-text-field-autofill-color(transparent, $text-color);
 }
+
+.mat-grid-tile {
+  overflow: visible !important;
+}

@@ -9882,12 +9882,105 @@ export enum UserStatusOrderField {
   UpdatedAt = "UPDATED_AT"
 }
 
+export type RepositoryQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+};
+
+export type RepositoryQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & Pick<
+      Repository,
+      | "createdAt"
+      | "description"
+      | "diskUsage"
+      | "forkCount"
+      | "url"
+      | "homepageUrl"
+    > & {
+        licenseInfo: Maybe<
+          { __typename?: "License" } & Pick<License, "name" | "nickname">
+        >;
+        watchers: { __typename?: "UserConnection" } & Pick<
+          UserConnection,
+          "totalCount"
+        >;
+        stargazers: { __typename?: "StargazerConnection" } & Pick<
+          StargazerConnection,
+          "totalCount"
+        >;
+        object: Maybe<
+          { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
+            __typename?: "Commit";
+          } & {
+            history: { __typename?: "CommitHistoryConnection" } & Pick<
+              CommitHistoryConnection,
+              "totalCount"
+            >;
+          })
+        >;
+        releases: { __typename?: "ReleaseConnection" } & Pick<
+          ReleaseConnection,
+          "totalCount"
+        >;
+        refs: Maybe<
+          { __typename?: "RefConnection" } & Pick<RefConnection, "totalCount">
+        >;
+      }
+  >;
+};
+
 export type ViewerQueryVariables = {};
 
 export type ViewerQuery = { __typename?: "Query" } & {
   viewer: { __typename?: "User" } & Pick<User, "name" | "login">;
 };
 
+export const RepositoryDocument = gql`
+  query Repository($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      createdAt
+      description
+      diskUsage
+      forkCount
+      url
+      homepageUrl
+      licenseInfo {
+        name
+        nickname
+      }
+      watchers {
+        totalCount
+      }
+      stargazers {
+        totalCount
+      }
+      object(expression: "master") {
+        ... on Commit {
+          history {
+            totalCount
+          }
+        }
+      }
+      releases {
+        totalCount
+      }
+      refs(refPrefix: "refs/tags/") {
+        totalCount
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class RepositoryGQL extends Apollo.Query<
+  RepositoryQuery,
+  RepositoryQueryVariables
+> {
+  document = RepositoryDocument;
+}
 export const ViewerDocument = gql`
   query Viewer {
     viewer {
