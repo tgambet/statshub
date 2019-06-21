@@ -10,7 +10,7 @@ import {tap} from 'rxjs/operators';
     <app-logo color="#404040"></app-logo>
     <form [formGroup]="searchForm">
       <mat-form-field appearance="standard">
-        <mat-label>GitHub repository url</mat-label>
+        <mat-label>GitHub repository path</mat-label>
         <input matInput formControlName="search" spellcheck="false">
         <mat-hint>e.g. angular/angular</mat-hint>
         <mat-error *ngIf="f.search.invalid">{{ getErrorMessage(f.search) }}</mat-error>

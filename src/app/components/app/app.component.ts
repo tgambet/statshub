@@ -8,7 +8,7 @@ import {Router} from '@angular/router';
     <mat-toolbar>
       <app-logo width="40" height="40"></app-logo>
       <h1>StatsHub</h1>
-      <button class="search" mat-icon-button>
+      <button class="search" mat-icon-button [routerLink]="['/']">
         <mat-icon>search</mat-icon>
       </button>
       <button class="user-menu" mat-icon-button [matMenuTriggerFor]="userMenu">

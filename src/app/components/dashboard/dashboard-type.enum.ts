@@ -1,0 +1,9 @@
+export enum DashboardType {
+  INFORMATION,
+  ISSUES,
+  LABELS,
+  POPULARITY,
+  DOWNLOADS,
+  FILES,
+  CALENDAR
+}
