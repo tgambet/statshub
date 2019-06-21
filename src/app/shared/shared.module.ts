@@ -16,6 +16,7 @@ import {
   MatToolbarModule
 } from '@angular/material';
 import {LayoutModule} from '@angular/cdk/layout';
+import {PipesModule} from '@app/shared/pipes.module';
 
 const MODULES = [
   BrowserModule,
@@ -34,11 +35,11 @@ const MODULES = [
   LayoutModule,
   MatToolbarModule,
   MatSidenavModule,
-  MatListModule
+  MatListModule,
+  PipesModule
 ];
 
 @NgModule({
-  declarations: [],
   imports: MODULES,
   exports: MODULES
 })
