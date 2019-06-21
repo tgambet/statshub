@@ -4,10 +4,15 @@ import {map, tap} from 'rxjs/operators';
 import {Observable} from 'rxjs';
 
 interface RepoStats {
+  imageUrl: string;
   url: string;
+  path: string;
   description: string;
   homepage: string;
   createdAt: string;
+  pushedAt: string;
+  issueCount: number;
+  prCount: number;
   forkCount: number;
   starCount: number;
   commitCount: number;
@@ -22,19 +27,28 @@ interface RepoStats {
   selector: 'app-information',
   template: `
     <ng-container *ngIf="repository$ | async as repo;">
+      <img [src]="repo.imageUrl" alt="Repository OpenGraph image" height="155">
       <dl>
         <dt>Repository</dt>
-        <dd class="full">angular/angular</dd>
+        <dd>{{repo.path}}</dd>
         <dt>Description</dt>
-        <dd class="full">{{repo.description}}</dd>
+        <dd class="description">{{repo.description}}</dd>
         <dt>Homepage</dt>
-        <dd class="full">{{repo.homepage}}</dd>
+        <dd>{{repo.homepage}}</dd>
+        <dt>License</dt>
+        <dd>{{repo.license}}</dd>
         <dt>Created on</dt>
-        <dd class="full">{{repo.createdAt | date:'longDate'}}</dd>
+        <dd>{{repo.createdAt | date:'longDate'}}</dd>
+        <dt>Last pushed</dt>
+        <dd>{{repo.pushedAt | timeAgo}}</dd>
         <dt>Commits</dt>
         <dd>{{repo.commitCount | number}}</dd>
-        <dt>Size</dt>
-        <dd>{{repo.size | fileSize}}</dd>
+        <dt>Open issues</dt>
+        <dd>{{repo.issueCount | number}}</dd>
+        <dt>Open PRs</dt>
+        <dd>{{repo.prCount | number}}</dd>
+<!--        <dt>Size</dt>
+        <dd>{{repo.size | fileSize}}</dd>-->
         <dt>Releases</dt>
         <dd>{{repo.releaseCount | number}}</dd>
         <dt>Tags</dt>
@@ -45,8 +59,6 @@ interface RepoStats {
         <dd>{{repo.forkCount | number}}</dd>
         <dt>Watchers</dt>
         <dd>{{repo.watcherCount | number}}</dd>
-        <dt>License</dt>
-        <dd>{{repo.license}}</dd>
       </dl>
     </ng-container>
   `,
@@ -57,32 +69,33 @@ interface RepoStats {
       align-items: center;
       height: 100%;
     }
-    p, dl {
+    dl {
       margin: 0;
       line-height: 2;
-    }
-    dl {
       display: flex;
       flex-wrap: wrap;
+      max-width: 100%;
     }
     dt {
       width: 6rem;
       text-align: right;
-      font-weight: 300;
     }
     dd {
-      width: calc(50% - 6rem);
+      width: calc(100% - 6rem);
       margin: 0;
       padding-left: 1rem;
       box-sizing: border-box;
-    }
-    dd.full {
-      width: calc(100% - 6rem);
-    }
-    mat-chip {
       font-weight: 300;
-      margin-top: 0 !important;
-      margin-bottom: 0 !important;
+    }
+    .description {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    img {
+      max-width: 100%;
+      height: 155px;
+      padding-bottom: 0.5rem;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -100,10 +113,15 @@ export class InformationComponent implements OnInit {
         tap(result => this.loading = result.loading),
         map(result => result.data.repository),
         map(repo => ({
+          imageUrl: repo.openGraphImageUrl,
+          path: repo.nameWithOwner,
           url: repo.url,
           description: repo.description,
           homepage: repo.homepageUrl,
           createdAt: repo.createdAt,
+          pushedAt: repo.pushedAt,
+          issueCount: repo.issues.totalCount,
+          prCount: repo.pullRequests.totalCount,
           forkCount: repo.forkCount,
           starCount: repo.stargazers.totalCount,
           commitCount: repo.object.history.totalCount,

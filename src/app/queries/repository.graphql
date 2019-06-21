@@ -1,6 +1,9 @@
 query Repository($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
+    resourcePath
+    nameWithOwner
     createdAt
+    pushedAt
     description
     diskUsage
     forkCount
@@ -29,5 +32,12 @@ query Repository($owner: String!, $name: String!) {
     refs(refPrefix: "refs/tags/") {
       totalCount
     }
+    pullRequests(states: [OPEN]) {
+      totalCount
+    }
+    issues(states: [OPEN]) {
+      totalCount
+    }
+    openGraphImageUrl
   }
 }

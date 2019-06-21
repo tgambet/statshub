@@ -9891,12 +9891,16 @@ export type RepositoryQuery = { __typename?: "Query" } & {
   repository: Maybe<
     { __typename?: "Repository" } & Pick<
       Repository,
+      | "resourcePath"
+      | "nameWithOwner"
       | "createdAt"
+      | "pushedAt"
       | "description"
       | "diskUsage"
       | "forkCount"
       | "url"
       | "homepageUrl"
+      | "openGraphImageUrl"
     > & {
         licenseInfo: Maybe<
           { __typename?: "License" } & Pick<License, "name" | "nickname">
@@ -9926,6 +9930,14 @@ export type RepositoryQuery = { __typename?: "Query" } & {
         refs: Maybe<
           { __typename?: "RefConnection" } & Pick<RefConnection, "totalCount">
         >;
+        pullRequests: { __typename?: "PullRequestConnection" } & Pick<
+          PullRequestConnection,
+          "totalCount"
+        >;
+        issues: { __typename?: "IssueConnection" } & Pick<
+          IssueConnection,
+          "totalCount"
+        >;
       }
   >;
 };
@@ -9939,7 +9951,10 @@ export type ViewerQuery = { __typename?: "Query" } & {
 export const RepositoryDocument = gql`
   query Repository($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
+      resourcePath
+      nameWithOwner
       createdAt
+      pushedAt
       description
       diskUsage
       forkCount
@@ -9968,6 +9983,13 @@ export const RepositoryDocument = gql`
       refs(refPrefix: "refs/tags/") {
         totalCount
       }
+      pullRequests(states: [OPEN]) {
+        totalCount
+      }
+      issues(states: [OPEN]) {
+        totalCount
+      }
+      openGraphImageUrl
     }
   }
 `;
