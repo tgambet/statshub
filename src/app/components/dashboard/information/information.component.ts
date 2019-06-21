@@ -94,8 +94,7 @@ interface RepoStats {
     }
     img {
       max-width: 100%;
-      height: 155px;
-      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush

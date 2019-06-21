@@ -94,9 +94,9 @@ export class DashboardComponent {
         this.isSmallScreen = true;
         return of([
           { meta: this.INFO_CARD, size: { cols: 4, rows: 2 } },
+          { meta: this.POPULARITY_CARD, size: { cols: 4, rows: 1 } },
           { meta: this.ISSUES_CARD, size: { cols: 4, rows: 1 } },
           { meta: this.LABELS_CARD, size: { cols: 4, rows: 1 } },
-          { meta: this.POPULARITY_CARD, size: { cols: 4, rows: 1 } },
           { meta: this.DOWNLOADS_CARD, size: { cols: 4, rows: 1 } },
           { meta: this.FILES_CARD, size: { cols: 4, rows: 2 } },
           { meta: this.CALENDAR_CARD, size: { cols: 4, rows: 1 } },
@@ -111,9 +111,9 @@ export class DashboardComponent {
             this.isMediumScreen = true;
             return [
               { meta: this.INFO_CARD, size: { cols: 2, rows: 2 } },
+              { meta: this.POPULARITY_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.ISSUES_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.LABELS_CARD, size: { cols: 2, rows: 1 } },
-              { meta: this.POPULARITY_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.DOWNLOADS_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.FILES_CARD, size: { cols: 4, rows: 2 } },
               { meta: this.CALENDAR_CARD, size: { cols: 4, rows: 1 } },
@@ -121,9 +121,9 @@ export class DashboardComponent {
           }
           return [
             { meta: this.INFO_CARD, size: { cols: 1, rows: 2 } },
+            { meta: this.POPULARITY_CARD, size: { cols: 1, rows: 1 } },
             { meta: this.ISSUES_CARD, size: { cols: 1, rows: 1 } },
             { meta: this.LABELS_CARD, size: { cols: 1, rows: 1 } },
-            { meta: this.POPULARITY_CARD, size: { cols: 1, rows: 1 } },
             { meta: this.DOWNLOADS_CARD, size: { cols: 1, rows: 1 } },
             { meta: this.FILES_CARD, size: { cols: 2, rows: 2 } },
             { meta: this.CALENDAR_CARD, size: { cols: 2, rows: 1 } },
