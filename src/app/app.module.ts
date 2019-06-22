@@ -47,6 +47,8 @@ import {Charts4ngModule} from 'charts4ng';
     GraphQLModule,
     Charts4ngModule,
     SharedModule,
+    Charts4ngModule,
+    Charts4ngModule,
   ],
   providers: [],
   bootstrap: [RootComponent]

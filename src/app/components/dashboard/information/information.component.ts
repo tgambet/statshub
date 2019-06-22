@@ -27,7 +27,7 @@ interface RepoStats {
   selector: 'app-information',
   template: `
     <ng-container *ngIf="repository$ | async as repo;">
-      <img [src]="repo.imageUrl" alt="Repository OpenGraph image" height="155">
+      <img [src]="repo.imageUrl" alt="Repository OpenGraph image">
       <dl>
         <dt>Repository</dt>
         <dd>{{repo.path}}</dd>
@@ -94,6 +94,7 @@ interface RepoStats {
     }
     img {
       max-width: 100%;
+      max-height: 155px;
       margin-bottom: 0.5rem;
     }
   `],

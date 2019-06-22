@@ -9942,6 +9942,63 @@ export type RepositoryQuery = { __typename?: "Query" } & {
   >;
 };
 
+export type MoreStargazersQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  cursor: Scalars["String"];
+};
+
+export type MoreStargazersQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      stargazers: { __typename?: "StargazerConnection" } & {
+        pageInfo: { __typename?: "PageInfo" } & Pick<
+          PageInfo,
+          "startCursor" | "hasPreviousPage"
+        >;
+        edges: Maybe<
+          Array<
+            Maybe<
+              { __typename?: "StargazerEdge" } & Pick<
+                StargazerEdge,
+                "starredAt"
+              >
+            >
+          >
+        >;
+      };
+    }
+  >;
+};
+
+export type StargazersQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+};
+
+export type StargazersQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      stargazers: { __typename?: "StargazerConnection" } & {
+        pageInfo: { __typename?: "PageInfo" } & Pick<
+          PageInfo,
+          "startCursor" | "hasPreviousPage"
+        >;
+        edges: Maybe<
+          Array<
+            Maybe<
+              { __typename?: "StargazerEdge" } & Pick<
+                StargazerEdge,
+                "starredAt"
+              >
+            >
+          >
+        >;
+      };
+    }
+  >;
+};
+
 export type ViewerQueryVariables = {};
 
 export type ViewerQuery = { __typename?: "Query" } & {
@@ -10002,6 +10059,56 @@ export class RepositoryGQL extends Apollo.Query<
   RepositoryQueryVariables
 > {
   document = RepositoryDocument;
+}
+export const MoreStargazersDocument = gql`
+  query MoreStargazers($owner: String!, $name: String!, $cursor: String!) {
+    repository(owner: $owner, name: $name) {
+      stargazers(before: $cursor, last: 100) {
+        pageInfo {
+          startCursor
+          hasPreviousPage
+        }
+        edges {
+          starredAt
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class MoreStargazersGQL extends Apollo.Query<
+  MoreStargazersQuery,
+  MoreStargazersQueryVariables
+> {
+  document = MoreStargazersDocument;
+}
+export const StargazersDocument = gql`
+  query Stargazers($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      stargazers(last: 100) {
+        pageInfo {
+          startCursor
+          hasPreviousPage
+        }
+        edges {
+          starredAt
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class StargazersGQL extends Apollo.Query<
+  StargazersQuery,
+  StargazersQueryVariables
+> {
+  document = StargazersDocument;
 }
 export const ViewerDocument = gql`
   query Viewer {

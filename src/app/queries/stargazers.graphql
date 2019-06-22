@@ -1,0 +1,15 @@
+query Stargazers($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    stargazers(last: 100) {
+      pageInfo {
+        startCursor
+        hasPreviousPage
+      }
+      edges {
+        starredAt
+      }
+    }
+  }
+}
+
+

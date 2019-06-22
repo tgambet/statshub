@@ -21,7 +21,7 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
               </mat-menu>
             </mat-card-title>
           </mat-card-header>
-          <mat-card-content class="dashboard-card-content">
+          <mat-card-content>
             <app-parent [type]="card.meta.type"></app-parent>
           </mat-card-content>
         </mat-card>
@@ -58,7 +58,8 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
       top: 10px;
       right: 10px;
     }
-    .dashboard-card-content {
+    mat-card-content {
+      flex-grow: 1;
     }
     .focused {
       z-index: 1;
