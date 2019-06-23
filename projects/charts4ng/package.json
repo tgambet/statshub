@@ -4,6 +4,7 @@
   "peerDependencies": {
     "@angular/common": "^8.0.1",
     "@angular/core": "^8.0.1",
-    "d3": "^5.9.2"
+    "d3": "^5.9.2",
+    "d3-interpolate-path": "^2.1.0"
   }
 }

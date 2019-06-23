@@ -13,16 +13,23 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 import {Axis, ScaleLinear, ScaleTime} from 'd3';
+import {interpolatePath} from 'd3-interpolate-path';
 import {simplify} from '../utils/simplify';
 
 @Component({
   selector: 'charts4ng-line',
   template: `
     <svg class="line-chart" #svg [attr.width]="width + margin.left + margin.right" [attr.height]="height + margin.top + margin.bottom">
-      <g class="graph" [attr.transform]="'translate(' + margin.left + ', ' + margin.top + ')'">
+      <g class="graph" #graph [attr.transform]="'translate(' + margin.left + ', ' + margin.top + ')'">
         <g class="x axis" [attr.transform]="'translate(0, ' + height + ')'" #xAxis/>
         <g class="y axis" #yAxis/>
-        <path class="line" *ngFor="let d of data; trackBy: trackBy" [attr.d]="lineD(d)"></path>
+        <g class="legend" font-size="10" font-family="sans-serif">
+          <g *ngFor="let legend of legends; let i = index" [attr.transform]="'translate(0, ' +  (i * 20 + 10) + ')'">
+            <line [attr.stroke]="legend.color" stroke-width="2" x2="30"></line>
+            <text fill="currentColor" x="35" dy="3">{{ legend.name }}</text>
+          </g>
+        </g>
+        <!--<path class="line" [ngClass]="index" *ngFor="let d of data; let index; trackBy: trackBy" [attr.d]="lineD(d)"></path>-->
       </g>
     </svg>
   `,
@@ -33,7 +40,6 @@ import {simplify} from '../utils/simplify';
     }
     .line-chart .line {
       fill: none;
-      stroke: #ffab00;
       stroke-width: 2;
     }
     .line-chart .y .tick line {
@@ -41,11 +47,9 @@ import {simplify} from '../utils/simplify';
       stroke-dasharray: 2px;
       shape-rendering: crispEdges;
     }
-    .line-chart .y .domain, .line-chart .y .tick:first-of-type {
+    .line-chart .y .domain,
+    .line-chart .y .tick:first-of-type {
       display: none;
-    }
-    .line-chart .line {
-      transition: d 300ms;
     }
   `],
   styleUrls: [],
@@ -55,6 +59,7 @@ import {simplify} from '../utils/simplify';
 export class LineComponent implements OnInit, OnChanges {
 
   @Input() data: { date: Date, value: number }[][] = [];
+  @Input() legends: { name: string, color: string }[] = [];
 
   margin = { top: 10, right: 30, bottom: 20, left: 10 };
   height = 20;
@@ -62,12 +67,14 @@ export class LineComponent implements OnInit, OnChanges {
 
   @ViewChild('svg', { static: true })
   private svgRef: ElementRef;
+  @ViewChild('graph', { static: true })
+  private graphRef: ElementRef;
   @ViewChild('xAxis', { static: true })
   private xAxisRef: ElementRef;
   @ViewChild('yAxis', { static: true })
   private yAxisRef: ElementRef;
 
-  private svgSelection;
+  private graphSelection;
   private xAxisSelection;
   private yAxisSelection;
   private xAxisCall: Axis<Date>;
@@ -79,7 +86,7 @@ export class LineComponent implements OnInit, OnChanges {
   constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
-    this.svgSelection = d3.select(this.svgRef.nativeElement);
+    this.graphSelection = d3.select(this.graphRef.nativeElement);
     this.xAxisSelection = d3.select(this.xAxisRef.nativeElement);
     this.yAxisSelection = d3.select(this.yAxisRef.nativeElement);
 
@@ -101,7 +108,7 @@ export class LineComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes.data.firstChange) {
-      this.update(250);
+      this.update(300);
     }
   }
 
@@ -109,13 +116,39 @@ export class LineComponent implements OnInit, OnChanges {
     this.setScale();
     this.xAxisCall(this.xAxisSelection);
     this.yAxisCall(this.yAxisSelection);
+    this.data.forEach((d, i) => {
+      const datum = d.map(({ date, value }) => ({
+        x: this.xScale(date),
+        y: this.yScale(value)
+      }));
+      this.graphSelection
+        .append('path')
+        .attr('class', 'line l' + i)
+        .attr('stroke', this.legends[i] && this.legends[i].color || '#ffab00')
+        .attr('d', this.line(simplify(datum, .5, false)));
+    });
   }
 
-  update(transition: number) {
+  update(duration: number) {
     this.setScale();
-    const t = d3.transition().duration(transition);
+    const t = d3.transition().duration(duration);
     this.xAxisCall(this.xAxisSelection.transition(t));
     this.yAxisCall(this.yAxisSelection.transition(t));
+    this.data.forEach((d, i) => {
+      const datum = d.map(({ date, value }) => ({
+        x: this.xScale(date),
+        y: this.yScale(value)
+      }));
+      const line = this.line;
+      this.graphSelection
+        .select('.l' + i)
+        .transition(t)
+        .attrTween('d', function() {
+          const previous = d3.select(this).attr('d');
+          const current = line(simplify(datum, .5, false));
+          return interpolatePath(previous, current);
+        });
+    });
   }
 
   setScale() {
@@ -147,21 +180,9 @@ export class LineComponent implements OnInit, OnChanges {
     this.yAxisCall.tickSize(this.width);
   }
 
-  lineD(d: { date: Date, value: number }[]) {
-    const datum = d.map(({ date, value }) => ({
-      x: this.xScale(date),
-      y: this.yScale(value)
-    }));
-    return this.line(simplify(datum, .5, false));
-  }
-
   @HostListener('window:resize')
   onResize() {
     this.update(0);
-  }
-
-  trackBy(i: number) {
-    return i;
   }
 
 }
