@@ -68,6 +68,10 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
       transform: scale(2) translate(-55%, 25%);
       transform-origin: top right;
     }
+    .popularity.focused {
+      transform: scale(2) translate(28%, 25%);
+      transform-origin: top;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

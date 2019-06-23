@@ -9882,6 +9882,65 @@ export enum UserStatusOrderField {
   UpdatedAt = "UPDATED_AT"
 }
 
+export type MoreForksQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  cursor: Scalars["String"];
+};
+
+export type MoreForksQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      forks: { __typename?: "RepositoryConnection" } & {
+        pageInfo: { __typename?: "PageInfo" } & Pick<
+          PageInfo,
+          "endCursor" | "hasNextPage"
+        >;
+        edges: Maybe<
+          Array<
+            Maybe<
+              { __typename?: "RepositoryEdge" } & {
+                node: Maybe<
+                  { __typename?: "Repository" } & Pick<Repository, "createdAt">
+                >;
+              }
+            >
+          >
+        >;
+      };
+    }
+  >;
+};
+
+export type ForksQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+};
+
+export type ForksQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      forks: { __typename?: "RepositoryConnection" } & {
+        pageInfo: { __typename?: "PageInfo" } & Pick<
+          PageInfo,
+          "endCursor" | "hasNextPage"
+        >;
+        edges: Maybe<
+          Array<
+            Maybe<
+              { __typename?: "RepositoryEdge" } & {
+                node: Maybe<
+                  { __typename?: "Repository" } & Pick<Repository, "createdAt">
+                >;
+              }
+            >
+          >
+        >;
+      };
+    }
+  >;
+};
+
 export type RepositoryQueryVariables = {
   owner: Scalars["String"];
   name: Scalars["String"];
@@ -9954,7 +10013,7 @@ export type MoreStargazersQuery = { __typename?: "Query" } & {
       stargazers: { __typename?: "StargazerConnection" } & {
         pageInfo: { __typename?: "PageInfo" } & Pick<
           PageInfo,
-          "startCursor" | "hasPreviousPage"
+          "endCursor" | "hasNextPage"
         >;
         edges: Maybe<
           Array<
@@ -9982,7 +10041,7 @@ export type StargazersQuery = { __typename?: "Query" } & {
       stargazers: { __typename?: "StargazerConnection" } & {
         pageInfo: { __typename?: "PageInfo" } & Pick<
           PageInfo,
-          "startCursor" | "hasPreviousPage"
+          "endCursor" | "hasNextPage"
         >;
         edges: Maybe<
           Array<
@@ -10005,6 +10064,57 @@ export type ViewerQuery = { __typename?: "Query" } & {
   viewer: { __typename?: "User" } & Pick<User, "name" | "login">;
 };
 
+export const MoreForksDocument = gql`
+  query MoreForks($owner: String!, $name: String!, $cursor: String!) {
+    repository(owner: $owner, name: $name) {
+      forks(after: $cursor, first: 100) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        edges {
+          node {
+            createdAt
+          }
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class MoreForksGQL extends Apollo.Query<
+  MoreForksQuery,
+  MoreForksQueryVariables
+> {
+  document = MoreForksDocument;
+}
+export const ForksDocument = gql`
+  query Forks($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      forks(first: 100) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        edges {
+          node {
+            createdAt
+          }
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class ForksGQL extends Apollo.Query<ForksQuery, ForksQueryVariables> {
+  document = ForksDocument;
+}
 export const RepositoryDocument = gql`
   query Repository($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
@@ -10063,10 +10173,10 @@ export class RepositoryGQL extends Apollo.Query<
 export const MoreStargazersDocument = gql`
   query MoreStargazers($owner: String!, $name: String!, $cursor: String!) {
     repository(owner: $owner, name: $name) {
-      stargazers(before: $cursor, last: 100) {
+      stargazers(after: $cursor, first: 100) {
         pageInfo {
-          startCursor
-          hasPreviousPage
+          endCursor
+          hasNextPage
         }
         edges {
           starredAt
@@ -10088,10 +10198,10 @@ export class MoreStargazersGQL extends Apollo.Query<
 export const StargazersDocument = gql`
   query Stargazers($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
-      stargazers(last: 100) {
+      stargazers(first: 100) {
         pageInfo {
-          startCursor
-          hasPreviousPage
+          endCursor
+          hasNextPage
         }
         edges {
           starredAt

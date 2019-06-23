@@ -1,0 +1,17 @@
+query MoreForks($owner: String!, $name: String!, $cursor: String!) {
+  repository(owner: $owner, name: $name) {
+    forks(after: $cursor, first: 100) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      edges {
+        node {
+          createdAt
+        }
+      }
+    }
+  }
+}
+
+

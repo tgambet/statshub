@@ -1,13 +1,17 @@
-query MoreStargazers($owner: String!, $name: String!, $cursor: String!) {
+query Forks($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
-    stargazers(after: $cursor, first: 100) {
+    forks(first: 100) {
       pageInfo {
         endCursor
         hasNextPage
       }
       edges {
-        starredAt
+        node {
+          createdAt
+        }
       }
     }
   }
 }
+
+
