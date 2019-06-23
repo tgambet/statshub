@@ -2,6 +2,7 @@ import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {RepositoryGQL} from '@app/github.schema';
 import {map, tap} from 'rxjs/operators';
 import {Observable} from 'rxjs';
+import {ActivatedRoute} from '@angular/router';
 
 interface RepoStats {
   imageUrl: string;
@@ -105,10 +106,20 @@ export class InformationComponent implements OnInit {
   loading = true;
   repository$: Observable<RepoStats>;
 
-  constructor(private repo: RepositoryGQL) { }
+  constructor(
+    private repo: RepositoryGQL,
+    private route: ActivatedRoute
+  ) { }
 
   ngOnInit() {
-    this.repository$ = this.repo.watch({ owner: 'angular', name: 'angular' })
+    const owner = this.route.snapshot.paramMap.get('user');
+    const name = this.route.snapshot.paramMap.get('repo');
+
+    if (owner === null || name === null) {
+      throw Error('owner or name is null!');
+    }
+
+    this.repository$ = this.repo.watch({ owner, name })
       .valueChanges.pipe(
         tap(result => this.loading = result.loading),
         map(result => result.data.repository),

@@ -2,11 +2,12 @@ import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {ForksGQL, MoreForksGQL, MoreStargazersGQL, StargazersGQL} from '@app/github.schema';
 import {concatMap, filter, map, mergeMap, tap} from 'rxjs/operators';
 import {combineLatest, concat, Observable, of} from 'rxjs';
+import {ActivatedRoute} from '@angular/router';
 
 @Component({
   selector: 'app-popularity',
   template: `
-    <charts4ng-line *ngIf="data$ | async as data" [data]="data"></charts4ng-line>
+    <charts4ng-line *ngIf="data$ | async as data" [data]="data" [legends]="legends"></charts4ng-line>
     <!--<ng-container *ngIf="stars$ | async as stars">
       {{ stars.length }}
     </ng-container>-->
@@ -17,6 +18,9 @@ import {combineLatest, concat, Observable, of} from 'rxjs';
 })
 export class PopularityComponent implements OnInit {
 
+  owner: string;
+  name: string;
+
   loading = true;
   cursor: string;
 
@@ -24,15 +28,27 @@ export class PopularityComponent implements OnInit {
   forks$: Observable<{ forkedAt: string }[]>;
 
   data$: Observable<{ date: Date; value: number; }[][]>;
+  legends = [
+    { name: 'Stars', color: '#ffab00' },
+    { name: 'Forks', color: 'steelblue' }
+  ];
 
   constructor(
     private stargazersGQL: StargazersGQL,
     private moreStargazerGQL: MoreStargazersGQL,
     private forksGQL: ForksGQL,
-    private moreForksGQL: MoreForksGQL
+    private moreForksGQL: MoreForksGQL,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit() {
+    this.owner = this.route.snapshot.paramMap.get('user');
+    this.name = this.route.snapshot.paramMap.get('repo');
+
+    if (this.owner === null || this.name === null) {
+      throw Error('owner or name is null!');
+    }
+
     this.stars$ = this.loadStars();
     this.forks$ = this.loadForks();
 
@@ -58,7 +74,7 @@ export class PopularityComponent implements OnInit {
   }
 
   loadStars(): Observable<{ starredAt: string }[]> {
-    return this.stargazersGQL.watch({ owner: 'angular', name: 'angular' })
+    return this.stargazersGQL.watch({ owner: this.owner, name: this.name })
       .valueChanges.pipe(
         tap(result => this.loading = result.loading),
         filter(result => !result.loading),
@@ -77,7 +93,7 @@ export class PopularityComponent implements OnInit {
   }
 
   loadMoreStars(cursor: string): Observable<{ starredAt: string }[]> {
-    return this.moreStargazerGQL.watch({ owner: 'angular', name: 'angular', cursor }).valueChanges.pipe(
+    return this.moreStargazerGQL.watch({ owner: this.owner, name: this.name, cursor }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.stargazers),
       mergeMap(stargazers => {
@@ -94,7 +110,7 @@ export class PopularityComponent implements OnInit {
   }
 
   loadForks(): Observable<{ forkedAt: string }[]> {
-    return this.forksGQL.watch({ owner: 'angular', name: 'angular' }).valueChanges.pipe(
+    return this.forksGQL.watch({ owner: this.owner, name: this.name }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
@@ -112,7 +128,7 @@ export class PopularityComponent implements OnInit {
   }
 
   loadMoreForks(cursor: string): Observable<{ forkedAt: string }[]> {
-    return this.moreForksGQL.watch({ owner: 'angular', name: 'angular', cursor }).valueChanges.pipe(
+    return this.moreForksGQL.watch({ owner: this.owner, name: this.name, cursor }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
