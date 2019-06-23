@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 import {Axis, ScaleLinear, ScaleTime} from 'd3';
+import {simplify} from '../utils/simplify';
 
 @Component({
   selector: 'charts4ng-line',
@@ -73,7 +74,7 @@ export class LineComponent implements OnInit, OnChanges {
   private yAxisCall: Axis<number>;
   private xScale: ScaleTime<number, number>;
   private yScale: ScaleLinear<number, number>;
-  private line: d3.Line<{ date: Date, value: number }>;
+  private line: d3.Line<{ x: number, y: number }>;
 
   constructor(private cdr: ChangeDetectorRef) { }
 
@@ -89,14 +90,12 @@ export class LineComponent implements OnInit, OnChanges {
     this.xAxisCall = d3.axisBottom<Date>(this.xScale).ticks(5);
     this.yAxisCall = d3.axisRight<number>(this.yScale).ticks(10, 's');
 
-    this.line = d3.line<{ date: Date, value: number }>()
-      .defined(d => !isNaN(d.value))
-      .x(d => this.xScale(d.date))
-      .y(d => this.yScale(d.value))
+    this.line = d3.line<{x: number, y: number}>()
+      .x(d => d.x)
+      .y(d => d.y)
       .curve(d3.curveMonotoneX);
 
     setTimeout(() => {
-      this.setScale();
       this.init();
     });
   }
@@ -105,6 +104,21 @@ export class LineComponent implements OnInit, OnChanges {
     if (!changes.data.firstChange) {
       this.update(250);
     }
+  }
+
+  init() {
+    this.setScale();
+    this.xAxisCall(this.xAxisSelection);
+    this.yAxisCall(this.yAxisSelection);
+    this.drawLine();
+  }
+
+  update(transition: number) {
+    this.setScale();
+    const t = d3.transition().duration(transition);
+    this.xAxisCall(this.xAxisSelection.transition(t));
+    this.yAxisCall(this.yAxisSelection.transition(t));
+    this.drawLine();
   }
 
   setScale() {
@@ -128,24 +142,15 @@ export class LineComponent implements OnInit, OnChanges {
     this.yAxisCall.tickSize(this.width);
   }
 
-  init() {
-    this.xAxisCall(this.xAxisSelection);
-    this.yAxisCall(this.yAxisSelection);
-    this.lineSelection.datum(this.data).attr('d', this.line);
-  }
-
-  update(transition: number) {
-
-    this.setScale();
-    const t = d3.transition().duration(transition);
-    this.xAxisCall(this.xAxisSelection.transition(t));
-    this.yAxisCall(this.yAxisSelection.transition(t));
-    this.lineSelection.interrupt('trans');
+  drawLine() {
     this.lineSelection
-      .datum(this.data)
-      .transition('trans')
-      .duration(transition)
-      .attr('d', this.line);
+      .datum(this.data.map(
+        ({ date, value }) => ({
+          x: this.xScale(date),
+          y: this.yScale(value)
+        })
+      ))
+      .attr('d', d => this.line(simplify(d, .5, false)));
   }
 
   @HostListener('window:resize')
