@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {ForksGQL, MoreForksGQL, MoreStargazersGQL, StargazersGQL} from '@app/github.schema';
 import {concatMap, filter, map, mergeMap, tap} from 'rxjs/operators';
 import {combineLatest, concat, Observable, of} from 'rxjs';
@@ -7,16 +7,25 @@ import {ActivatedRoute} from '@angular/router';
 @Component({
   selector: 'app-popularity',
   template: `
-    <charts4ng-line *ngIf="data$ | async as data" [data]="data" [legends]="legends"></charts4ng-line>
-    <!--<ng-container *ngIf="stars$ | async as stars">
-      {{ stars.length }}
-    </ng-container>-->
+    <header>
+      <h2>Popularity</h2>
+      <button mat-icon-button class="more-button" [matMenuTriggerFor]="menu" aria-label="Toggle menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu" xPosition="before">
+        <button mat-menu-item (click)="expand.emit()">Expand</button>
+      </mat-menu>
+    </header>
+    <section>
+      <charts4ng-line *ngIf="data$ | async as data" [data]="data" [legends]="legends"></charts4ng-line>
+    </section>
   `,
-  styles: [`
-  `],
+  styleUrls: ['../card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PopularityComponent implements OnInit {
+
+  @Output() expand: EventEmitter<void> = new EventEmitter();
 
   owner: string;
   name: string;

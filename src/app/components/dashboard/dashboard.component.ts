@@ -11,23 +11,10 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
       <mat-grid-tile *ngFor="let card of cards | async"
                      [colspan]="card.size.cols"
                      [rowspan]="card.size.rows"
-                     [class.focused]="isFocused && focusedElement === card.meta.class"
-                     [class.last]="focusedElement === card.meta.class">
-        <mat-card class="mat-card {{ card.meta.class }}" >
-          <mat-card-header>
-            <mat-card-title>
-              {{card.meta.title}}
-              <button mat-icon-button class="more-button" [matMenuTriggerFor]="menu" aria-label="Toggle menu">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #menu="matMenu" xPosition="before">
-                <button mat-menu-item (click)="focusedElement = card.meta.class; isFocused = true">Expand</button>
-              </mat-menu>
-            </mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <app-parent [type]="card.meta.type"></app-parent>
-          </mat-card-content>
+                     [class.last]="focusedElement === card.meta.class"
+                     [class.focused]="isFocused && focusedElement === card.meta.class">
+        <mat-card>
+          <app-parent [type]="card.meta.type" (expand)="focusedElement = card.meta.class; isFocused = true"></app-parent>
         </mat-card>
       </mat-grid-tile>
     </mat-grid-list>
@@ -38,14 +25,6 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
       display: block;
       padding: 20px;
       position: relative;
-    }
-    .backdrop {
-      position: absolute;
-      top: 0;
-      right: 0;
-      left: 0;
-      bottom: 0;
-      background-color: rgba(0,0,0,0.5);
     }
     mat-grid-tile {
       transition-property: transform, top, right, bottom, left;
@@ -61,14 +40,6 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
       right: 15px;
       bottom: 15px;
     }
-    .more-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-    }
-    mat-card-content {
-      flex-grow: 1;
-    }
     .focused {
       z-index: 1;
       transform: scale(2) translate(-25%, -25%);
@@ -79,6 +50,14 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
     }
     .last {
       z-index: 1;
+    }
+    .backdrop {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      bottom: 0;
+      background-color: rgba(0,0,0,0.5);
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush

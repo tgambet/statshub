@@ -20,55 +20,59 @@ interface RepoStats {
   watcherCount: number;
   releaseCount: number;
   tagCount: number;
-  size: number;
   license: string;
 }
 
 @Component({
   selector: 'app-information',
   template: `
-    <ng-container *ngIf="repository$ | async as repo;">
-      <img [src]="repo.imageUrl" alt="Repository OpenGraph image">
-      <dl>
-        <dt>Repository</dt>
-        <dd>{{repo.path}}</dd>
-        <dt>Description</dt>
-        <dd class="description">{{repo.description}}</dd>
-        <dt>Homepage</dt>
-        <dd>{{repo.homepage}}</dd>
-        <dt>License</dt>
-        <dd>{{repo.license}}</dd>
-        <dt>Created on</dt>
-        <dd>{{repo.createdAt | date:'longDate'}}</dd>
-        <dt>Last pushed</dt>
-        <dd>{{repo.pushedAt | timeAgo}}</dd>
-        <dt>Commits</dt>
-        <dd>{{repo.commitCount | number}}</dd>
-        <dt>Open issues</dt>
-        <dd>{{repo.issueCount | number}}</dd>
-        <dt>Open PRs</dt>
-        <dd>{{repo.prCount | number}}</dd>
-<!--        <dt>Size</dt>
-        <dd>{{repo.size | fileSize}}</dd>-->
-        <dt>Releases</dt>
-        <dd>{{repo.releaseCount | number}}</dd>
-        <dt>Tags</dt>
-        <dd>{{repo.tagCount | number}}</dd>
-        <dt>Stars</dt>
-        <dd>{{repo.starCount | number}}</dd>
-        <dt>Forks</dt>
-        <dd>{{repo.forkCount | number}}</dd>
-        <dt>Watchers</dt>
-        <dd>{{repo.watcherCount | number}}</dd>
-      </dl>
-    </ng-container>
+    <header>
+      <h2>Information</h2>
+    </header>
+    <section>
+      <ng-container *ngIf="repository$ | async as repo;">
+        <img [src]="repo.imageUrl" alt="Repository image">
+        <dl>
+          <dt>Repository</dt>
+          <dd>{{repo.path}}</dd>
+          <dt>Description</dt>
+          <dd>{{repo.description}}</dd>
+          <dt>Homepage</dt>
+          <dd>{{repo.homepage}}</dd>
+          <dt>License</dt>
+          <dd>{{repo.license}}</dd>
+          <dt>Created on</dt>
+          <dd>{{repo.createdAt | date:'longDate'}}</dd>
+          <dt>Last pushed</dt>
+          <dd>{{repo.pushedAt | timeAgo}}</dd>
+          <dt>Commits</dt>
+          <dd>{{repo.commitCount | number}}</dd>
+          <dt>Open issues</dt>
+          <dd>{{repo.issueCount | number}}</dd>
+          <dt>Open PRs</dt>
+          <dd>{{repo.prCount | number}}</dd>
+          <dt>Releases</dt>
+          <dd>{{repo.releaseCount | number}}</dd>
+          <dt>Tags</dt>
+          <dd>{{repo.tagCount | number}}</dd>
+          <dt>Stars</dt>
+          <dd>{{repo.starCount | number}}</dd>
+          <dt>Forks</dt>
+          <dd>{{repo.forkCount | number}}</dd>
+          <dt>Watchers</dt>
+          <dd>{{repo.watcherCount | number}}</dd>
+        </dl>
+      </ng-container>
+    </section>
   `,
   styles: [`
     :host {
+      font-size: 14px;
+    }
+    section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      height: 100%;
     }
     dl {
       margin: 0;
@@ -87,8 +91,6 @@ interface RepoStats {
       padding-left: 1rem;
       box-sizing: border-box;
       font-weight: 300;
-    }
-    .description {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -99,6 +101,7 @@ interface RepoStats {
       margin-bottom: 0.5rem;
     }
   `],
+  styleUrls: ['../card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InformationComponent implements OnInit {
@@ -139,7 +142,6 @@ export class InformationComponent implements OnInit {
           watcherCount: repo.watchers.totalCount,
           releaseCount: repo.releases.totalCount,
           tagCount: repo.refs.totalCount,
-          size: repo.diskUsage,
           license: repo.licenseInfo.nickname || repo.licenseInfo.name
         }))
       );

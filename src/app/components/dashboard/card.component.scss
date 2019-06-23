@@ -1,0 +1,23 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+header {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+}
+h2 {
+  margin: 0 0 0 8px;
+  font-size: 18px;
+  font-weight: 500;
+}
+.more-button {
+  margin-left: auto;
+  margin-right: -8px;
+}
+section {
+  flex-grow: 1;
+  margin: 0;
+}
