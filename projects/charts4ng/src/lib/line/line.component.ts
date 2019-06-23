@@ -22,7 +22,7 @@ import {simplify} from '../utils/simplify';
       <g class="graph" [attr.transform]="'translate(' + margin.left + ', ' + margin.top + ')'">
         <g class="x axis" [attr.transform]="'translate(0, ' + height + ')'" #xAxis/>
         <g class="y axis" #yAxis/>
-        <path class="line" d="" #line></path>
+        <path class="line" *ngFor="let d of data; trackBy: trackBy" [attr.d]="lineD(d)"></path>
       </g>
     </svg>
   `,
@@ -44,6 +44,9 @@ import {simplify} from '../utils/simplify';
     .line-chart .y .domain, .line-chart .y .tick:first-of-type {
       display: none;
     }
+    .line-chart .line {
+      transition: d 300ms;
+    }
   `],
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,7 +54,7 @@ import {simplify} from '../utils/simplify';
 })
 export class LineComponent implements OnInit, OnChanges {
 
-  @Input() data: { date: Date, value: number }[] = [];
+  @Input() data: { date: Date, value: number }[][] = [];
 
   margin = { top: 10, right: 30, bottom: 20, left: 10 };
   height = 20;
@@ -63,11 +66,8 @@ export class LineComponent implements OnInit, OnChanges {
   private xAxisRef: ElementRef;
   @ViewChild('yAxis', { static: true })
   private yAxisRef: ElementRef;
-  @ViewChild('line', { static: true })
-  private lineRef: ElementRef;
 
   private svgSelection;
-  private lineSelection;
   private xAxisSelection;
   private yAxisSelection;
   private xAxisCall: Axis<Date>;
@@ -82,7 +82,6 @@ export class LineComponent implements OnInit, OnChanges {
     this.svgSelection = d3.select(this.svgRef.nativeElement);
     this.xAxisSelection = d3.select(this.xAxisRef.nativeElement);
     this.yAxisSelection = d3.select(this.yAxisRef.nativeElement);
-    this.lineSelection = d3.select(this.lineRef.nativeElement);
 
     this.xScale = d3.scaleTime();
     this.yScale = d3.scaleLinear();
@@ -110,7 +109,6 @@ export class LineComponent implements OnInit, OnChanges {
     this.setScale();
     this.xAxisCall(this.xAxisSelection);
     this.yAxisCall(this.yAxisSelection);
-    this.drawLine();
   }
 
   update(transition: number) {
@@ -118,7 +116,6 @@ export class LineComponent implements OnInit, OnChanges {
     const t = d3.transition().duration(transition);
     this.xAxisCall(this.xAxisSelection.transition(t));
     this.yAxisCall(this.yAxisSelection.transition(t));
-    this.drawLine();
   }
 
   setScale() {
@@ -127,12 +124,20 @@ export class LineComponent implements OnInit, OnChanges {
 
     this.cdr.markForCheck();
 
+    const dates = this.data.map(
+      d => d.map(v => v.date)
+    ).reduce((p, c) => [...p, ...c], []);
+
+    const values = this.data.map(
+      d => d.map(v => v.value)
+    ).reduce((p, c) => [...p, ...c], []);
+
     this.xScale
-      .domain(d3.extent(this.data, d => d.date))
+      .domain(d3.extent(dates))
       .range([0, this.width])
       .nice();
 
-    this.yScale.domain([0, d3.max(this.data, d => d.value)])
+    this.yScale.domain([0, d3.max(values)])
       .range([this.height, 0])
       .nice();
 
@@ -142,20 +147,21 @@ export class LineComponent implements OnInit, OnChanges {
     this.yAxisCall.tickSize(this.width);
   }
 
-  drawLine() {
-    this.lineSelection
-      .datum(this.data.map(
-        ({ date, value }) => ({
-          x: this.xScale(date),
-          y: this.yScale(value)
-        })
-      ))
-      .attr('d', d => this.line(simplify(d, .5, false)));
+  lineD(d: { date: Date, value: number }[]) {
+    const datum = d.map(({ date, value }) => ({
+      x: this.xScale(date),
+      y: this.yScale(value)
+    }));
+    return this.line(simplify(datum, .5, false));
   }
 
   @HostListener('window:resize')
   onResize() {
     this.update(0);
+  }
+
+  trackBy(i: number) {
+    return i;
   }
 
 }

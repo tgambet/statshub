@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {ForksGQL, MoreForksGQL, MoreStargazersGQL, StargazersGQL} from '@app/github.schema';
 import {concatMap, filter, map, mergeMap, tap} from 'rxjs/operators';
-import {concat, Observable, of} from 'rxjs';
+import {combineLatest, concat, Observable, of} from 'rxjs';
 
 @Component({
   selector: 'app-popularity',
@@ -23,7 +23,7 @@ export class PopularityComponent implements OnInit {
   stars$: Observable<{ starredAt: string }[]>;
   forks$: Observable<{ forkedAt: string }[]>;
 
-  data$: Observable<{ date: Date; value: number; }[]>;
+  data$: Observable<{ date: Date; value: number; }[][]>;
 
   constructor(
     private stargazersGQL: StargazersGQL,
@@ -34,18 +34,31 @@ export class PopularityComponent implements OnInit {
 
   ngOnInit() {
     this.stars$ = this.loadStars();
+    this.forks$ = this.loadForks();
 
-    this.data$ = this.stars$.pipe(
-      map(stargazers => stargazers.map(stargazer => ({
-        date: new Date(stargazer.starredAt),
-        value: stargazers.indexOf(stargazer) + 1,
-      }))),
+    this.data$ = combineLatest([this.stars$, this.forks$]).pipe(
+      map(combined => {
+        const stargazers = combined[0];
+        const forks = combined[1];
+
+        const s = stargazers.map(stargazer => ({
+          date: new Date(stargazer.starredAt),
+          value: stargazers.indexOf(stargazer) + 1,
+        }));
+
+        const f = forks.map(fork => ({
+          date: new Date(fork.forkedAt),
+          value: forks.indexOf(fork)
+        }));
+
+        return [s, f];
+      }),
       // tap(result => console.log(result))
     );
   }
 
   loadStars(): Observable<{ starredAt: string }[]> {
-    return this.stargazersGQL.watch({ owner: 'tgambet', name: 'musicalypse' })
+    return this.stargazersGQL.watch({ owner: 'angular', name: 'angular' })
       .valueChanges.pipe(
         tap(result => this.loading = result.loading),
         filter(result => !result.loading),
@@ -64,7 +77,7 @@ export class PopularityComponent implements OnInit {
   }
 
   loadMoreStars(cursor: string): Observable<{ starredAt: string }[]> {
-    return this.moreStargazerGQL.watch({ owner: 'tgambet', name: 'musicalypse', cursor }).valueChanges.pipe(
+    return this.moreStargazerGQL.watch({ owner: 'angular', name: 'angular', cursor }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.stargazers),
       mergeMap(stargazers => {
@@ -81,15 +94,16 @@ export class PopularityComponent implements OnInit {
   }
 
   loadForks(): Observable<{ forkedAt: string }[]> {
-    return this.forksGQL.watch({ owner: 'akka', name: 'alpakka' }).valueChanges.pipe(
+    return this.forksGQL.watch({ owner: 'angular', name: 'angular' }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
         const createdAts = forks.edges.map(f => ({ forkedAt: f.node.createdAt }));
         if (forks.pageInfo.hasNextPage) {
-          return this.loadMoreForks(forks.pageInfo.endCursor).pipe(
+          const more = this.loadMoreForks(forks.pageInfo.endCursor).pipe(
             map(newForks => [...createdAts, ...newForks]),
           );
+          return concat(of(createdAts), more);
         } else {
           return of(createdAts);
         }
@@ -98,15 +112,16 @@ export class PopularityComponent implements OnInit {
   }
 
   loadMoreForks(cursor: string): Observable<{ forkedAt: string }[]> {
-    return this.moreForksGQL.watch({ owner: 'akka', name: 'alpakka', cursor }).valueChanges.pipe(
+    return this.moreForksGQL.watch({ owner: 'angular', name: 'angular', cursor }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
         const createdAts = forks.edges.map(f => ({ forkedAt: f.node.createdAt }));
         if (forks.pageInfo.hasNextPage) {
-          return this.loadMoreForks(forks.pageInfo.endCursor).pipe(
+          const more = this.loadMoreForks(forks.pageInfo.endCursor).pipe(
             map(newForks => [...createdAts, ...newForks])
           );
+          return concat(of(createdAts), more);
         } else {
           return of(createdAts);
         }

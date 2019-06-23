@@ -22,6 +22,7 @@ import {GraphQLModule} from './graphql.module';
 import {AppRoutingModule} from './app-routing.module';
 
 import {Charts4ngModule} from 'charts4ng';
+import {BrowserModule} from '@angular/platform-browser';
 
 @NgModule({
   declarations: [
@@ -42,13 +43,12 @@ import {Charts4ngModule} from 'charts4ng';
     CalendarComponent
   ],
   imports: [
+    BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     GraphQLModule,
     Charts4ngModule,
     SharedModule,
-    Charts4ngModule,
-    Charts4ngModule,
   ],
   providers: [],
   bootstrap: [RootComponent]
