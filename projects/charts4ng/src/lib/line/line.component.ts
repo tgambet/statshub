@@ -107,7 +107,11 @@ export class LineComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes.data.firstChange) {
+    if (changes.data && !changes.data.isFirstChange()) {
+      if (changes.data.currentValue.length !== changes.data.previousValue.length) {
+        this.graphSelection.selectAll('.line').remove();
+        this.init();
+      }
       this.update(300);
     }
   }

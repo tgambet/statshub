@@ -1,6 +1,6 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {ForksGQL, MoreForksGQL, MoreStargazersGQL, RepositoryGQL, StargazersGQL} from '@app/github.schema';
-import {concatMap, filter, first, map, mergeMap, tap} from 'rxjs/operators';
+import {concatMap, filter, first, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
 import {combineLatest, concat, Observable, of} from 'rxjs';
 import {ActivatedRoute} from '@angular/router';
 
@@ -13,7 +13,23 @@ import {ActivatedRoute} from '@angular/router';
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">
-        <button mat-menu-item (click)="expand.emit()">Expand</button>
+        <button mat-menu-item (click)="zoomIn.emit(); zoomed = true" *ngIf="!zoomed">
+          <mat-icon>zoom_in</mat-icon>
+          Zoom in
+        </button>
+        <button mat-menu-item (click)="zoomOut.emit(); zoomed = false" *ngIf="zoomed">
+          <mat-icon>zoom_out</mat-icon>
+          Zoom out
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stopLoading.emit(); stopped = true">
+          <mat-icon>stop</mat-icon>
+          Stop
+        </button>
+        <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(true); stopped = false">
+          <mat-icon>play_arrow</mat-icon>
+          Resume
+        </button>
       </mat-menu>
     </header>
     <section>
@@ -31,10 +47,14 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class PopularityComponent implements OnInit {
 
-  @Output() expand: EventEmitter<void> = new EventEmitter();
+  @Input() zoomed;
+  @Output() zoomIn: EventEmitter<void> = new EventEmitter();
+  @Output() zoomOut: EventEmitter<void> = new EventEmitter();
 
   loading = true;
+  stopped = false;
   loadedCount = 0;
+  stopLoading: EventEmitter<void> = new EventEmitter();
 
   owner: string;
   name: string;
@@ -83,41 +103,42 @@ export class PopularityComponent implements OnInit {
       repo => {
         this.starCount = repo.stargazers.totalCount;
         this.createdAt = new Date(repo.createdAt);
-
-        this.stars$ = this.loadStars();
-        this.forks$ = this.loadForks();
-
-        this.data$ = combineLatest([this.stars$, this.forks$]).pipe(
-          map(combined => {
-            const stargazers = combined[0];
-            const forks = combined[1];
-
-            let s = stargazers.map(stargazer => ({
-              date: new Date(stargazer.starredAt),
-              value: stargazers.indexOf(stargazer) + 1,
-            }));
-
-            let f = forks.map(fork => ({
-              date: new Date(fork.forkedAt),
-              value: forks.indexOf(fork) + 1
-            }));
-
-            this.loadedCount = s.length;
-
-            if (this.createdAt) {
-              s = [{ date: this.createdAt, value: 0 }, ...s];
-              f = [{ date: this.createdAt, value: 0 }, ...f];
-            }
-
-            return [s, f];
-          }),
-          // tap(result => console.log(result))
-        );
-
+        this.init();
         this.cdr.markForCheck();
       }
     );
+  }
 
+  init(emptyFirst: boolean = false) {
+    this.stars$ = this.loadStars().pipe(takeUntil(this.stopLoading.asObservable()));
+    this.forks$ = this.loadForks().pipe(takeUntil(this.stopLoading.asObservable()));
+
+    const latest = combineLatest([this.stars$, this.forks$]).pipe(
+      map(combined => {
+        const stargazers = combined[0];
+        const forks = combined[1];
+
+        let s = stargazers.map(stargazer => ({
+          date: new Date(stargazer.starredAt),
+          value: stargazers.indexOf(stargazer) + 1,
+        }));
+
+        let f = forks.map(fork => ({
+          date: new Date(fork.forkedAt),
+          value: forks.indexOf(fork) + 1
+        }));
+
+        this.loadedCount = s.length;
+
+        if (this.createdAt) {
+          s = [{ date: this.createdAt, value: 0 }, ...s];
+          f = [{ date: this.createdAt, value: 0 }, ...f];
+        }
+
+        return [s, f];
+      })
+    );
+    this.data$ = emptyFirst ? concat(of([]), latest) : latest;
   }
 
   loadStars(): Observable<{ starredAt: string }[]> {

@@ -14,7 +14,11 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
                      [class.last]="focusedElement === card.meta.class"
                      [class.focused]="isFocused && focusedElement === card.meta.class">
         <mat-card>
-          <app-parent [type]="card.meta.type" (expand)="focusedElement = card.meta.class; isFocused = true"></app-parent>
+          <app-parent [type]="card.meta.type"
+                      [zoomed]="isFocused && focusedElement === card.meta.class"
+                      (zoomOut)="isFocused = false"
+                      (zoomIn)="focusedElement = card.meta.class; isFocused = true">
+          </app-parent>
         </mat-card>
       </mat-grid-tile>
     </mat-grid-list>
