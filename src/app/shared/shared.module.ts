@@ -11,6 +11,8 @@ import {
   MatInputModule,
   MatListModule,
   MatMenuModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
   MatSidenavModule,
   MatToolbarModule
 } from '@angular/material';
@@ -34,7 +36,9 @@ const MODULES = [
   MatToolbarModule,
   MatSidenavModule,
   MatListModule,
-  PipesModule
+  PipesModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule
 ];
 
 @NgModule({

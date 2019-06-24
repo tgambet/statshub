@@ -1,6 +1,6 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output} from '@angular/core';
-import {ForksGQL, MoreForksGQL, MoreStargazersGQL, StargazersGQL} from '@app/github.schema';
-import {concatMap, filter, map, mergeMap, tap} from 'rxjs/operators';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnInit, Output} from '@angular/core';
+import {ForksGQL, MoreForksGQL, MoreStargazersGQL, RepositoryGQL, StargazersGQL} from '@app/github.schema';
+import {concatMap, filter, first, map, mergeMap, tap} from 'rxjs/operators';
 import {combineLatest, concat, Observable, of} from 'rxjs';
 import {ActivatedRoute} from '@angular/router';
 
@@ -17,8 +17,14 @@ import {ActivatedRoute} from '@angular/router';
       </mat-menu>
     </header>
     <section>
-      <charts4ng-line *ngIf="data$ | async as data" [data]="data" [legends]="legends"></charts4ng-line>
+      <charts4ng-line *ngIf="data$ | async as data else load" [data]="data" [legends]="legends"></charts4ng-line>
+      <ng-template #load>
+        <mat-spinner diameter="40"></mat-spinner>
+      </ng-template>
     </section>
+    <footer>
+      <mat-progress-bar *ngIf="progress < 100" [mode]="loading ? 'query' : 'determinate'" [value]="progress"></mat-progress-bar>
+    </footer>
   `,
   styleUrls: ['../card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -27,11 +33,13 @@ export class PopularityComponent implements OnInit {
 
   @Output() expand: EventEmitter<void> = new EventEmitter();
 
+  loading = true;
+  loadedCount = 0;
+
   owner: string;
   name: string;
-
-  loading = true;
-  cursor: string;
+  starCount: number;
+  createdAt: Date;
 
   stars$: Observable<{ starredAt: string }[]>;
   forks$: Observable<{ forkedAt: string }[]>;
@@ -42,12 +50,18 @@ export class PopularityComponent implements OnInit {
     { name: 'Forks', color: 'steelblue' }
   ];
 
+  get progress() {
+    return this.starCount > 0 ? this.loadedCount / this.starCount * 100 : 100;
+  }
+
   constructor(
+    private repositoryGQL: RepositoryGQL,
     private stargazersGQL: StargazersGQL,
     private moreStargazerGQL: MoreStargazersGQL,
     private forksGQL: ForksGQL,
     private moreForksGQL: MoreForksGQL,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit() {
@@ -58,28 +72,52 @@ export class PopularityComponent implements OnInit {
       throw Error('owner or name is null!');
     }
 
-    this.stars$ = this.loadStars();
-    this.forks$ = this.loadForks();
+    this.repositoryGQL.watch({
+      owner: this.owner,
+      name: this.name
+    }).valueChanges.pipe(
+      filter(result => !result.loading),
+      first(),
+      map(result => result.data.repository),
+    ).subscribe(
+      repo => {
+        this.starCount = repo.stargazers.totalCount;
+        this.createdAt = new Date(repo.createdAt);
 
-    this.data$ = combineLatest([this.stars$, this.forks$]).pipe(
-      map(combined => {
-        const stargazers = combined[0];
-        const forks = combined[1];
+        this.stars$ = this.loadStars();
+        this.forks$ = this.loadForks();
 
-        const s = stargazers.map(stargazer => ({
-          date: new Date(stargazer.starredAt),
-          value: stargazers.indexOf(stargazer) + 1,
-        }));
+        this.data$ = combineLatest([this.stars$, this.forks$]).pipe(
+          map(combined => {
+            const stargazers = combined[0];
+            const forks = combined[1];
 
-        const f = forks.map(fork => ({
-          date: new Date(fork.forkedAt),
-          value: forks.indexOf(fork)
-        }));
+            let s = stargazers.map(stargazer => ({
+              date: new Date(stargazer.starredAt),
+              value: stargazers.indexOf(stargazer) + 1,
+            }));
 
-        return [s, f];
-      }),
-      // tap(result => console.log(result))
+            let f = forks.map(fork => ({
+              date: new Date(fork.forkedAt),
+              value: forks.indexOf(fork) + 1
+            }));
+
+            this.loadedCount = s.length;
+
+            if (this.createdAt) {
+              s = [{ date: this.createdAt, value: 0 }, ...s];
+              f = [{ date: this.createdAt, value: 0 }, ...f];
+            }
+
+            return [s, f];
+          }),
+          // tap(result => console.log(result))
+        );
+
+        this.cdr.markForCheck();
+      }
     );
+
   }
 
   loadStars(): Observable<{ starredAt: string }[]> {

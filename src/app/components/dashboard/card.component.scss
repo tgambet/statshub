@@ -20,4 +20,18 @@ h2 {
 section {
   flex-grow: 1;
   margin: 0;
+  position: relative;
+}
+mat-spinner {
+  position: absolute;
+  top: calc(50% - 20px);
+  left: calc(50% - 20px);
+}
+footer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
 }
