@@ -29,13 +29,34 @@ interface Release {
           <mat-icon>zoom_out</mat-icon>
           Zoom out
         </button>
+        <mat-divider></mat-divider>
+<!--        <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stopLoading.emit(); stopped = true">
+          <mat-icon>stop</mat-icon>
+          Stop
+        </button>
+        <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(true); stopped = false">
+          <mat-icon>play_arrow</mat-icon>
+          Resume
+        </button>-->
+        <button mat-menu-item (click)="sortByDate()" *ngIf="!sortedByDate">
+          Sort by publish date
+        </button>
+        <button mat-menu-item (click)="sortByCount()" *ngIf="sortedByDate">
+          Sort by downloads
+        </button>
       </mat-menu>
     </header>
     <section>
-      <charts4ng-pie *ngIf="data$ | async as data" [data]="data" [selector]="selector" [sort]="sort"></charts4ng-pie>
+      <charts4ng-pie *ngIf="data$ | async as data"
+                     [data]="data"
+                     [selector]="selector"
+                     [labelSelector]="labelSelector"
+                     [sort]="sort">
+      </charts4ng-pie>
     </section>
   `,
   styleUrls: ['../card.component.scss'],
+  styles: [``],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DownloadsComponent implements OnInit {
@@ -49,12 +70,16 @@ export class DownloadsComponent implements OnInit {
   owner: string;
   name: string;
 
+  downloadCount = 0;
   releaseCount: number;
   releases$: Observable<Release[]>;
   data$: Observable<Release[]>;
 
-  selector = d => d.downloadCount === 0 ? 1 : d.downloadCount;
+  sortedByDate = false;
   sort = (a, b) => b.downloadCount - a.downloadCount;
+
+  selector = d => d.downloadCount;
+  labelSelector = d => d.tagName;
 
   constructor(
     private releasesGQL: ReleasesGQL,
@@ -75,8 +100,15 @@ export class DownloadsComponent implements OnInit {
     const maxReleases = 30;
 
     this.data$ = this.releases$.pipe(
+      tap(releases => this.downloadCount += releases.reduce((a, b) => a + b.downloadCount, 0)),
       map(releases => {
-        releases.sort((a, b) => b.downloadCount - a.downloadCount);
+        releases.sort((a, b) => {
+          if (b.downloadCount - a.downloadCount === 0) {
+            return b.tagName.localeCompare(a.tagName);
+          } else {
+            return b.downloadCount - a.downloadCount;
+          }
+        });
         if (releases.length >= maxReleases) {
           const othersCount = releases.slice(maxReleases).reduce((a, b) => a + b.downloadCount, 0);
           const othersDate = releases.slice(maxReleases)
@@ -113,7 +145,10 @@ export class DownloadsComponent implements OnInit {
         }));
 
         if (releases.pageInfo.hasNextPage) {
-          return concat(of(releasesMap), this.loadMoreReleases(releases.pageInfo.endCursor));
+          const more = this.loadMoreReleases(releases.pageInfo.endCursor).pipe(
+            map(newReleases => [...releasesMap, ...newReleases])
+          );
+          return concat(of(releasesMap), more);
         } else {
           return of(releasesMap);
         }
@@ -135,12 +170,25 @@ export class DownloadsComponent implements OnInit {
         }));
 
         if (releases.pageInfo.hasNextPage) {
-          return concat(of(releasesMap), this.loadMoreReleases(releases.pageInfo.endCursor));
+          const more = this.loadMoreReleases(releases.pageInfo.endCursor).pipe(
+            map(newReleases => [...releasesMap, ...newReleases])
+          );
+          return concat(of(releasesMap), more);
         } else {
           return of(releasesMap);
         }
       })
     );
+  }
+
+  sortByDate(): void {
+    this.sort = (a, b) => b.publishedAt.toUTCString().localeCompare(a.publishedAt.toUTCString());
+    this.sortedByDate = true;
+  }
+
+  sortByCount(): void {
+    this.sort = (a, b) => b.downloadCount - a.downloadCount;
+    this.sortedByDate = false;
   }
 
 }
