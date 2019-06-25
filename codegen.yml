@@ -1,5 +1,5 @@
 schema: src/app/github.schema.graphql
-documents: src/**/*.graphql
+documents: src/app/queries/**/*.graphql
 generates:
   ./src/app/github.schema.ts:
     plugins:

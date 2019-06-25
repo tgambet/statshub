@@ -5,6 +5,7 @@ query Stargazers($owner: String!, $name: String!) {
         endCursor
         hasNextPage
       }
+      totalCount
       edges {
         starredAt
       }

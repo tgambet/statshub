@@ -5,10 +5,8 @@ query MoreForks($owner: String!, $name: String!, $cursor: String!) {
         endCursor
         hasNextPage
       }
-      edges {
-        node {
-          createdAt
-        }
+      nodes {
+        createdAt
       }
     }
   }

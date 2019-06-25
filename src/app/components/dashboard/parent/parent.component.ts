@@ -12,7 +12,11 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
                     (zoomIn)="zoomIn.emit()"
                     (zoomOut)="zoomOut.emit()">
     </app-popularity>
-    <app-downloads *ngIf="type === DashboardType.DOWNLOADS"></app-downloads>
+    <app-downloads *ngIf="type === DashboardType.DOWNLOADS"
+                   [zoomed]="zoomed"
+                   (zoomIn)="zoomIn.emit()"
+                   (zoomOut)="zoomOut.emit()">
+    </app-downloads>
     <app-calendar *ngIf="type === DashboardType.CALENDAR"></app-calendar>
     <app-files *ngIf="type === DashboardType.FILES"></app-files>
   `,

@@ -1,11 +1,16 @@
 import {NgModule} from '@angular/core';
-import {Charts4ngComponent} from './charts4ng.component';
 import {LineComponent} from './line/line.component';
 import {CommonModule} from '@angular/common';
+import {PieComponent} from './pie/pie.component';
+
+const COMPONENTS = [
+  LineComponent,
+  PieComponent
+];
 
 @NgModule({
-  declarations: [Charts4ngComponent, LineComponent],
   imports: [CommonModule],
-  exports: [Charts4ngComponent, LineComponent]
+  declarations: COMPONENTS,
+  exports: COMPONENTS
 })
 export class Charts4ngModule { }

@@ -9896,15 +9896,9 @@ export type MoreForksQuery = { __typename?: "Query" } & {
           PageInfo,
           "endCursor" | "hasNextPage"
         >;
-        edges: Maybe<
+        nodes: Maybe<
           Array<
-            Maybe<
-              { __typename?: "RepositoryEdge" } & {
-                node: Maybe<
-                  { __typename?: "Repository" } & Pick<Repository, "createdAt">
-                >;
-              }
-            >
+            Maybe<{ __typename?: "Repository" } & Pick<Repository, "createdAt">>
           >
         >;
       };
@@ -9920,23 +9914,108 @@ export type ForksQueryVariables = {
 export type ForksQuery = { __typename?: "Query" } & {
   repository: Maybe<
     { __typename?: "Repository" } & {
-      forks: { __typename?: "RepositoryConnection" } & {
+      forks: { __typename?: "RepositoryConnection" } & Pick<
+        RepositoryConnection,
+        "totalCount"
+      > & {
+          pageInfo: { __typename?: "PageInfo" } & Pick<
+            PageInfo,
+            "endCursor" | "hasNextPage"
+          >;
+          nodes: Maybe<
+            Array<
+              Maybe<
+                { __typename?: "Repository" } & Pick<Repository, "createdAt">
+              >
+            >
+          >;
+        };
+    }
+  >;
+};
+
+export type MoreReleasesQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  cursor: Scalars["String"];
+};
+
+export type MoreReleasesQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      releases: { __typename?: "ReleaseConnection" } & {
         pageInfo: { __typename?: "PageInfo" } & Pick<
           PageInfo,
           "endCursor" | "hasNextPage"
         >;
-        edges: Maybe<
+        nodes: Maybe<
           Array<
             Maybe<
-              { __typename?: "RepositoryEdge" } & {
-                node: Maybe<
-                  { __typename?: "Repository" } & Pick<Repository, "createdAt">
-                >;
-              }
+              { __typename?: "Release" } & Pick<
+                Release,
+                "name" | "tagName" | "publishedAt"
+              > & {
+                  releaseAssets: { __typename?: "ReleaseAssetConnection" } & {
+                    nodes: Maybe<
+                      Array<
+                        Maybe<
+                          { __typename?: "ReleaseAsset" } & Pick<
+                            ReleaseAsset,
+                            "name" | "downloadCount"
+                          >
+                        >
+                      >
+                    >;
+                  };
+                }
             >
           >
         >;
       };
+    }
+  >;
+};
+
+export type ReleasesQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+};
+
+export type ReleasesQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      releases: { __typename?: "ReleaseConnection" } & Pick<
+        ReleaseConnection,
+        "totalCount"
+      > & {
+          pageInfo: { __typename?: "PageInfo" } & Pick<
+            PageInfo,
+            "endCursor" | "hasNextPage"
+          >;
+          nodes: Maybe<
+            Array<
+              Maybe<
+                { __typename?: "Release" } & Pick<
+                  Release,
+                  "name" | "tagName" | "publishedAt"
+                > & {
+                    releaseAssets: { __typename?: "ReleaseAssetConnection" } & {
+                      nodes: Maybe<
+                        Array<
+                          Maybe<
+                            { __typename?: "ReleaseAsset" } & Pick<
+                              ReleaseAsset,
+                              "name" | "downloadCount"
+                            >
+                          >
+                        >
+                      >;
+                    };
+                  }
+              >
+            >
+          >;
+        };
     }
   >;
 };
@@ -10038,22 +10117,25 @@ export type StargazersQueryVariables = {
 export type StargazersQuery = { __typename?: "Query" } & {
   repository: Maybe<
     { __typename?: "Repository" } & {
-      stargazers: { __typename?: "StargazerConnection" } & {
-        pageInfo: { __typename?: "PageInfo" } & Pick<
-          PageInfo,
-          "endCursor" | "hasNextPage"
-        >;
-        edges: Maybe<
-          Array<
-            Maybe<
-              { __typename?: "StargazerEdge" } & Pick<
-                StargazerEdge,
-                "starredAt"
+      stargazers: { __typename?: "StargazerConnection" } & Pick<
+        StargazerConnection,
+        "totalCount"
+      > & {
+          pageInfo: { __typename?: "PageInfo" } & Pick<
+            PageInfo,
+            "endCursor" | "hasNextPage"
+          >;
+          edges: Maybe<
+            Array<
+              Maybe<
+                { __typename?: "StargazerEdge" } & Pick<
+                  StargazerEdge,
+                  "starredAt"
+                >
               >
             >
-          >
-        >;
-      };
+          >;
+        };
     }
   >;
 };
@@ -10072,10 +10154,8 @@ export const MoreForksDocument = gql`
           endCursor
           hasNextPage
         }
-        edges {
-          node {
-            createdAt
-          }
+        nodes {
+          createdAt
         }
       }
     }
@@ -10099,10 +10179,9 @@ export const ForksDocument = gql`
           endCursor
           hasNextPage
         }
-        edges {
-          node {
-            createdAt
-          }
+        totalCount
+        nodes {
+          createdAt
         }
       }
     }
@@ -10114,6 +10193,73 @@ export const ForksDocument = gql`
 })
 export class ForksGQL extends Apollo.Query<ForksQuery, ForksQueryVariables> {
   document = ForksDocument;
+}
+export const MoreReleasesDocument = gql`
+  query MoreReleases($owner: String!, $name: String!, $cursor: String!) {
+    repository(owner: $owner, name: $name) {
+      releases(after: $cursor, first: 50) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        nodes {
+          name
+          tagName
+          publishedAt
+          releaseAssets(first: 100) {
+            nodes {
+              name
+              downloadCount
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class MoreReleasesGQL extends Apollo.Query<
+  MoreReleasesQuery,
+  MoreReleasesQueryVariables
+> {
+  document = MoreReleasesDocument;
+}
+export const ReleasesDocument = gql`
+  query Releases($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      releases(first: 50) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        totalCount
+        nodes {
+          name
+          tagName
+          publishedAt
+          releaseAssets(first: 100) {
+            nodes {
+              name
+              downloadCount
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class ReleasesGQL extends Apollo.Query<
+  ReleasesQuery,
+  ReleasesQueryVariables
+> {
+  document = ReleasesDocument;
 }
 export const RepositoryDocument = gql`
   query Repository($owner: String!, $name: String!) {
@@ -10203,6 +10349,7 @@ export const StargazersDocument = gql`
           endCursor
           hasNextPage
         }
+        totalCount
         edges {
           starredAt
         }

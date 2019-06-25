@@ -182,7 +182,7 @@ export class PopularityComponent implements OnInit {
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
-        const createdAts = forks.edges.map(f => ({ forkedAt: f.node.createdAt }));
+        const createdAts = forks.nodes.map(f => ({ forkedAt: f.createdAt }));
         if (forks.pageInfo.hasNextPage) {
           const more = this.loadMoreForks(forks.pageInfo.endCursor).pipe(
             map(newForks => [...createdAts, ...newForks]),
@@ -200,7 +200,7 @@ export class PopularityComponent implements OnInit {
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
-        const createdAts = forks.edges.map(f => ({ forkedAt: f.node.createdAt }));
+        const createdAts = forks.nodes.map(f => ({ forkedAt: f.createdAt }));
         if (forks.pageInfo.hasNextPage) {
           const more = this.loadMoreForks(forks.pageInfo.endCursor).pipe(
             map(newForks => [...createdAts, ...newForks])

@@ -1,0 +1,21 @@
+query MoreReleases($owner: String!, $name: String!, $cursor: String!) {
+  repository(owner: $owner, name: $name) {
+    releases(after: $cursor, first: 50) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      nodes {
+        name
+        tagName
+        publishedAt
+        releaseAssets(first: 100) {
+          nodes {
+            name
+            downloadCount
+          }
+        }
+      }
+    }
+  }
+}

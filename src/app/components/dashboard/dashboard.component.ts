@@ -45,9 +45,10 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
       bottom: 15px;
     }
     .focused {
+      position: absolute;
       z-index: 1;
       transform: scale(2) translate(-25%, -25%);
-      top: 50% !important;
+      top: calc(50% - 32px) !important;
       left: 50% !important;
       bottom: unset !important;
       right: unset !important;
@@ -73,13 +74,13 @@ export class DashboardComponent {
   isSmallScreen: boolean;
   isMediumScreen: boolean;
 
-  INFO_CARD =       { class: 'info', title: 'Information', type: DashboardType.INFORMATION };
-  ISSUES_CARD =     { class: 'issues', title: 'Issues', type: DashboardType.ISSUES };
-  LABELS_CARD =     { class: 'labels', title: 'Labels', type: DashboardType.LABELS };
-  POPULARITY_CARD = { class: 'popularity', title: 'Popularity', type: DashboardType.POPULARITY };
-  DOWNLOADS_CARD =  { class: 'downloads', title: 'Downloads', type: DashboardType.DOWNLOADS };
-  FILES_CARD =      { class: 'files', title: 'File explorer', type: DashboardType.FILES };
-  CALENDAR_CARD =   { class: 'calendar', title: 'Calendar', type: DashboardType.CALENDAR };
+  INFO_CARD =       { class: 'info', type: DashboardType.INFORMATION };
+  ISSUES_CARD =     { class: 'issues', type: DashboardType.ISSUES };
+  LABELS_CARD =     { class: 'labels', type: DashboardType.LABELS };
+  POPULARITY_CARD = { class: 'popularity', type: DashboardType.POPULARITY };
+  DOWNLOADS_CARD =  { class: 'downloads', type: DashboardType.DOWNLOADS };
+  FILES_CARD =      { class: 'files', type: DashboardType.FILES };
+  CALENDAR_CARD =   { class: 'calendar', type: DashboardType.CALENDAR };
 
   cards = this.breakpointObserver.observe([
     Breakpoints.XSmall,
@@ -109,9 +110,9 @@ export class DashboardComponent {
             return [
               { meta: this.INFO_CARD, size: { cols: 2, rows: 2 } },
               { meta: this.POPULARITY_CARD, size: { cols: 2, rows: 1 } },
+              { meta: this.DOWNLOADS_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.ISSUES_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.LABELS_CARD, size: { cols: 2, rows: 1 } },
-              { meta: this.DOWNLOADS_CARD, size: { cols: 2, rows: 1 } },
               { meta: this.FILES_CARD, size: { cols: 4, rows: 2 } },
               { meta: this.CALENDAR_CARD, size: { cols: 4, rows: 1 } },
             ];

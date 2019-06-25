@@ -62,7 +62,7 @@ export class LineComponent implements OnInit, OnChanges {
   @Input() legends: { name: string, color: string }[] = [];
 
   margin = { top: 10, right: 30, bottom: 20, left: 10 };
-  height = 20;
+  height = 100;
   width = 100;
 
   @ViewChild('svg', { static: true })

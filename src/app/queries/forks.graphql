@@ -5,10 +5,9 @@ query Forks($owner: String!, $name: String!) {
         endCursor
         hasNextPage
       }
-      edges {
-        node {
-          createdAt
-        }
+      totalCount
+      nodes {
+        createdAt
       }
     }
   }
