@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {concat, Observable, of} from 'rxjs';
-import {filter, map, mergeMap, tap} from 'rxjs/operators';
+import {filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
 
 import {MoreReleasesGQL, ReleasesGQL} from '@app/github.schema';
 
@@ -29,15 +29,15 @@ interface Release {
           <mat-icon>zoom_out</mat-icon>
           Zoom out
         </button>
-        <mat-divider></mat-divider>
-<!--        <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stopLoading.emit(); stopped = true">
+        <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stopLoading.emit(); stopped = true">
           <mat-icon>stop</mat-icon>
           Stop
         </button>
-        <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(true); stopped = false">
+        <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(); stopped = false">
           <mat-icon>play_arrow</mat-icon>
           Resume
-        </button>-->
+        </button>
+        <mat-divider></mat-divider>
         <button mat-menu-item (click)="sortByDate()" *ngIf="!sortedByDate">
           Sort by publish date
         </button>
@@ -47,13 +47,19 @@ interface Release {
       </mat-menu>
     </header>
     <section>
-      <charts4ng-pie *ngIf="data$ | async as data"
+      <charts4ng-pie *ngIf="data$ | async as data else load"
                      [data]="data"
                      [selector]="selector"
                      [labelSelector]="labelSelector"
                      [sort]="sort">
       </charts4ng-pie>
+      <ng-template #load>
+        <mat-spinner diameter="40"></mat-spinner>
+      </ng-template>
     </section>
+    <footer>
+      <mat-progress-bar *ngIf="progress < 100" [mode]="loading ? 'query' : 'determinate'" [value]="progress"></mat-progress-bar>
+    </footer>
   `,
   styleUrls: ['../card.component.scss'],
   styles: [``],
@@ -61,14 +67,17 @@ interface Release {
 })
 export class DownloadsComponent implements OnInit {
 
-  loading = true;
-
   @Input() zoomed;
   @Output() zoomIn: EventEmitter<void> = new EventEmitter();
   @Output() zoomOut: EventEmitter<void> = new EventEmitter();
 
   owner: string;
   name: string;
+
+  loading = true;
+  stopped = false;
+  loadedCount = 0;
+  stopLoading: EventEmitter<void> = new EventEmitter();
 
   downloadCount = 0;
   releaseCount: number;
@@ -80,6 +89,10 @@ export class DownloadsComponent implements OnInit {
 
   selector = d => d.downloadCount;
   labelSelector = d => d.tagName;
+
+  get progress() {
+    return this.releaseCount > 0 ? this.loadedCount / this.releaseCount * 100 : 100;
+  }
 
   constructor(
     private releasesGQL: ReleasesGQL,
@@ -95,13 +108,19 @@ export class DownloadsComponent implements OnInit {
       throw Error('owner or name is null!');
     }
 
-    this.releases$ = this.loadReleases();
+    this.init();
+  }
+
+  init() {
+    this.releases$ = this.loadReleases().pipe(takeUntil(this.stopLoading.asObservable()));
 
     const maxReleases = 30;
 
     this.data$ = this.releases$.pipe(
       tap(releases => this.downloadCount += releases.reduce((a, b) => a + b.downloadCount, 0)),
       map(releases => {
+        this.loadedCount = releases.length;
+
         releases.sort((a, b) => {
           if (b.downloadCount - a.downloadCount === 0) {
             return b.tagName.localeCompare(a.tagName);

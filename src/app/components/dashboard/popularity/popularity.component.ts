@@ -21,7 +21,6 @@ import {ActivatedRoute} from '@angular/router';
           <mat-icon>zoom_out</mat-icon>
           Zoom out
         </button>
-        <mat-divider></mat-divider>
         <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stopLoading.emit(); stopped = true">
           <mat-icon>stop</mat-icon>
           Stop
