@@ -1,0 +1,16 @@
+query Issues($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    issues(orderBy: {field: CREATED_AT, direction: ASC}, first: 100) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        closed
+        closedAt
+        createdAt
+      }
+    }
+  }
+}

@@ -9934,6 +9934,66 @@ export type ForksQuery = { __typename?: "Query" } & {
   >;
 };
 
+export type MoreIssuesQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  cursor: Scalars["String"];
+};
+
+export type MoreIssuesQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      issues: { __typename?: "IssueConnection" } & {
+        pageInfo: { __typename?: "PageInfo" } & Pick<
+          PageInfo,
+          "hasNextPage" | "endCursor"
+        >;
+        nodes: Maybe<
+          Array<
+            Maybe<
+              { __typename?: "Issue" } & Pick<
+                Issue,
+                "closed" | "closedAt" | "createdAt"
+              >
+            >
+          >
+        >;
+      };
+    }
+  >;
+};
+
+export type IssuesQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+};
+
+export type IssuesQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      issues: { __typename?: "IssueConnection" } & Pick<
+        IssueConnection,
+        "totalCount"
+      > & {
+          pageInfo: { __typename?: "PageInfo" } & Pick<
+            PageInfo,
+            "hasNextPage" | "endCursor"
+          >;
+          nodes: Maybe<
+            Array<
+              Maybe<
+                { __typename?: "Issue" } & Pick<
+                  Issue,
+                  "closed" | "closedAt" | "createdAt"
+                >
+              >
+            >
+          >;
+        };
+    }
+  >;
+};
+
 export type MoreReleasesQueryVariables = {
   owner: Scalars["String"];
   name: Scalars["String"];
@@ -10193,6 +10253,62 @@ export const ForksDocument = gql`
 })
 export class ForksGQL extends Apollo.Query<ForksQuery, ForksQueryVariables> {
   document = ForksDocument;
+}
+export const MoreIssuesDocument = gql`
+  query MoreIssues($owner: String!, $name: String!, $cursor: String!) {
+    repository(owner: $owner, name: $name) {
+      issues(
+        orderBy: { field: CREATED_AT, direction: ASC }
+        after: $cursor
+        first: 100
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          closed
+          closedAt
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class MoreIssuesGQL extends Apollo.Query<
+  MoreIssuesQuery,
+  MoreIssuesQueryVariables
+> {
+  document = MoreIssuesDocument;
+}
+export const IssuesDocument = gql`
+  query Issues($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      issues(orderBy: { field: CREATED_AT, direction: ASC }, first: 100) {
+        totalCount
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          closed
+          closedAt
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class IssuesGQL extends Apollo.Query<IssuesQuery, IssuesQueryVariables> {
+  document = IssuesDocument;
 }
 export const MoreReleasesDocument = gql`
   query MoreReleases($owner: String!, $name: String!, $cursor: String!) {

@@ -67,7 +67,7 @@ interface Release {
 })
 export class DownloadsComponent implements OnInit {
 
-  @Input() zoomed;
+  @Input() zoomed: boolean;
   @Output() zoomIn: EventEmitter<void> = new EventEmitter();
   @Output() zoomOut: EventEmitter<void> = new EventEmitter();
 

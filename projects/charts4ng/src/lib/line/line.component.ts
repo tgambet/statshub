@@ -25,7 +25,7 @@ import {simplify} from '../utils/simplify';
         <g class="y axis" #yAxis/>
         <g class="legend" font-size="10" font-family="sans-serif">
           <g *ngFor="let legend of legends; let i = index" [attr.transform]="'translate(0, ' +  (i * 20 + 10) + ')'">
-            <line [attr.stroke]="legend.color" stroke-width="2" x2="30"></line>
+            <line [attr.stroke]="legend.color" [attr.stroke-width]="areaChart ? 6 : 2" x2="30"></line>
             <text fill="currentColor" x="35" dy="3">{{ legend.name }}</text>
           </g>
         </g>
@@ -38,7 +38,7 @@ import {simplify} from '../utils/simplify';
       height: 100%;
       width: 100%;
     }
-    .line-chart .line {
+    .line-chart .line:not(.area) {
       fill: none;
       stroke-width: 2;
     }
@@ -60,6 +60,7 @@ export class LineComponent implements OnInit, OnChanges {
 
   @Input() data: { date: Date, value: number }[][] = [];
   @Input() legends: { name: string, color: string }[] = [];
+  @Input() areaChart = false;
 
   margin = { top: 10, right: 30, bottom: 20, left: 10 };
   height = 100;
@@ -96,11 +97,6 @@ export class LineComponent implements OnInit, OnChanges {
     this.xAxisCall = d3.axisBottom<Date>(this.xScale).ticks(5);
     this.yAxisCall = d3.axisRight<number>(this.yScale).ticks(10, 's');
 
-    this.line = d3.line<{x: number, y: number}>()
-      .x(d => d.x)
-      .y(d => d.y)
-      .curve(d3.curveMonotoneX);
-
     setTimeout(() => {
       this.init();
     });
@@ -127,8 +123,9 @@ export class LineComponent implements OnInit, OnChanges {
       }));
       this.graphSelection
         .append('path')
-        .attr('class', 'line l' + i)
+        .attr('class', 'line l' + i.toString() + (this.areaChart ? ' area' : ''))
         .attr('stroke', this.legends[i] && this.legends[i].color || '#ffab00')
+        .attr('fill', this.areaChart ? this.legends[i] && this.legends[i].color : 'none')
         .attr('d', this.line(simplify(datum, .5, false)));
     });
   }
@@ -161,6 +158,17 @@ export class LineComponent implements OnInit, OnChanges {
 
     this.cdr.markForCheck();
 
+    this.line = this.areaChart ?
+      d3.area<{x: number, y: number}>()
+        .x(d => d.x)
+        .y0(this.height)
+        .y1(d => d.y)
+        .curve(d3.curveMonotoneX) :
+      d3.line<{x: number, y: number}>()
+        .x(d => d.x)
+        .y(d => d.y)
+        .curve(d3.curveMonotoneX);
+
     const dates = this.data.map(
       d => d.map(v => v.date)
     ).reduce((p, c) => [...p, ...c], []);
@@ -171,8 +179,7 @@ export class LineComponent implements OnInit, OnChanges {
 
     this.xScale
       .domain(d3.extent(dates))
-      .range([0, this.width])
-      .nice();
+      .range([0, this.width]);
 
     this.yScale.domain([0, d3.max(values)])
       .range([this.height, 0])

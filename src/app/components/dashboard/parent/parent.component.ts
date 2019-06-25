@@ -5,7 +5,11 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
   selector: 'app-parent',
   template: `
     <app-information *ngIf="type === DashboardType.INFORMATION"></app-information>
-    <app-issues *ngIf="type === DashboardType.ISSUES"></app-issues>
+    <app-issues *ngIf="type === DashboardType.ISSUES"
+                [zoomed]="zoomed"
+                (zoomIn)="zoomIn.emit()"
+                (zoomOut)="zoomOut.emit()">
+    </app-issues>
     <app-labels *ngIf="type === DashboardType.LABELS"></app-labels>
     <app-popularity *ngIf="type === DashboardType.POPULARITY"
                     [zoomed]="zoomed"
