@@ -58,7 +58,8 @@ export class PopularityComponent implements OnInit {
 
   owner: string;
   name: string;
-  starCount: number;
+  starCount = 0;
+  forkCount = 0;
   createdAt: Date;
 
   stars$: Observable<{ starredAt: string }[]>;
@@ -71,7 +72,7 @@ export class PopularityComponent implements OnInit {
   ];
 
   get progress() {
-    return this.starCount > 0 ? this.loadedCount / this.starCount * 100 : 100;
+    return this.starCount + this.forkCount > 0 ? this.loadedCount / (this.starCount + this.forkCount) * 100 : 100;
   }
 
   constructor(
@@ -131,7 +132,7 @@ export class PopularityComponent implements OnInit {
           value: forks.indexOf(fork) + 1
         }));
 
-        this.loadedCount = s.length;
+        this.loadedCount = s.length + f.length;
 
         if (this.createdAt) {
           s = [{ date: this.createdAt, value: 0 }, ...s];
@@ -184,6 +185,7 @@ export class PopularityComponent implements OnInit {
     return this.forksGQL.watch({ owner: this.owner, name: this.name }).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
+      tap(forks => this.forkCount = forks.totalCount),
       concatMap(forks => {
         const createdAts = forks.nodes.map(f => ({ forkedAt: f.createdAt }));
         if (forks.pageInfo.hasNextPage) {
