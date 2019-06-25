@@ -112,7 +112,7 @@ export class DownloadsComponent implements OnInit {
         if (releases.length >= maxReleases) {
           const othersCount = releases.slice(maxReleases).reduce((a, b) => a + b.downloadCount, 0);
           const othersDate = releases.slice(maxReleases)
-            .map(r => r.publishedAt.toUTCString())
+            .map(r => r.publishedAt.toISOString())
             .sort((a, b) => a.localeCompare(b))[0];
 
           return [...releases.slice(0, maxReleases), {
@@ -182,7 +182,7 @@ export class DownloadsComponent implements OnInit {
   }
 
   sortByDate(): void {
-    this.sort = (a, b) => b.publishedAt.toUTCString().localeCompare(a.publishedAt.toUTCString());
+    this.sort = (a, b) => b.publishedAt.toISOString().localeCompare(a.publishedAt.toISOString());
     this.sortedByDate = true;
   }
 
