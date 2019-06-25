@@ -139,6 +139,11 @@ export class PopularityComponent implements OnInit {
           f = [{ date: this.createdAt, value: 0 }, ...f];
         }
 
+        if (this.progress >= 100 && s.length > 0 && f.length > 0) {
+          s = [...s, { date: new Date(), value: s[s.length - 1].value }];
+          f = [...f, { date: new Date(), value: f[f.length - 1].value }];
+        }
+
         return [s, f];
       })
     );
