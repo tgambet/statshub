@@ -118,6 +118,9 @@ export class PopularityComponent implements OnInit {
         const stargazers = combined[0];
         const forks = combined[1];
 
+        stargazers.sort((a, b) => a.starredAt.localeCompare(b.starredAt));
+        forks.sort((a, b) => a.forkedAt.localeCompare(b.forkedAt));
+
         let s = stargazers.map(stargazer => ({
           date: new Date(stargazer.starredAt),
           value: stargazers.indexOf(stargazer) + 1,
