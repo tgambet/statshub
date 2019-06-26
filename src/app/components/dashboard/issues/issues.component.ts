@@ -1,8 +1,9 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {IssuesGQL, MoreIssuesGQL} from '@app/github.schema';
-import {concat, Observable, of} from 'rxjs';
-import {filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
+import {concat, EMPTY, Observable, of} from 'rxjs';
+import {catchError, filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
+import {ApolloError} from 'apollo-client';
 
 interface Issue {
   closed: boolean;
@@ -14,8 +15,14 @@ interface Issue {
   selector: 'app-issues',
   template: `
     <header>
-      <h2>Issues</h2>
-      <button mat-icon-button class="more-button" [matMenuTriggerFor]="menu" aria-label="Toggle menu">
+      <h2>Issues <mat-icon color="warn"
+                           *ngIf="hasError"
+                           [matTooltip]="getErrors"
+                           aria-label="Errors">warning</mat-icon>
+      </h2>
+      <button mat-icon-button class="more-button"
+              [matMenuTriggerFor]="menu" aria-label="Toggle menu"
+              [matBadge]="hasError && progress < 100 && stopped ? '1' : ''" matBadgeSize="small" matBadgeColor="primary">
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">
@@ -27,12 +34,12 @@ interface Issue {
           <mat-icon>zoom_out</mat-icon>
           Zoom out
         </button>
-        <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stopLoading.emit(); stopped = true">
+        <button mat-menu-item *ngIf="progress < 100 && !stopped" (click)="stop()">
           <mat-icon>stop</mat-icon>
           Stop
         </button>
-        <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(); stopped = false">
-          <mat-icon>play_arrow</mat-icon>
+        <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="resume()">
+          <mat-icon color="primary">play_arrow</mat-icon>
           Resume
         </button>
       </mat-menu>
@@ -71,11 +78,21 @@ export class IssuesComponent implements OnInit {
   data$: Observable<{ date: Date; value: number; }[][]>;
   legends = [
     { name: 'Open issues', color: '#ff5252' },
-    { name: 'Closed issues', color: '#00e676' }
+    { name: 'Closed issues', color: '#8bc34a' }
   ];
+
+  errors: string[] = [];
 
   get progress() {
     return this.issueCount > 0 ? this.loadedCount / this.issueCount * 100 : 100;
+  }
+
+  get hasError() {
+    return this.errors.length > 0;
+  }
+
+  get getErrors() {
+    return this.errors.join('\n');
   }
 
   constructor(
@@ -123,9 +140,29 @@ export class IssuesComponent implements OnInit {
     );
   }
 
+  resume(): void {
+    this.stopped = false;
+    this.errors = [];
+    this.init();
+  }
+
+  stop(): void {
+    this.stopped = true;
+    this.stopLoading.emit();
+  }
+
   loadIssues(): Observable<Issue[]> {
-    return this.issuesGQL.watch({ owner: this.owner, name: this.name }).valueChanges.pipe(
+    return this.issuesGQL.watch(
+      { owner: this.owner, name: this.name }
+    ).valueChanges.pipe(
       tap(result => this.loading = result.loading),
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
       map(result => result.data.repository.issues),
       mergeMap(issues => {
@@ -145,12 +182,25 @@ export class IssuesComponent implements OnInit {
         } else {
           return of(issuesMap);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }
 
   loadMoreIssues(cursor: string): Observable<Issue[]> {
-    return this.moreIssuesGQL.watch({ owner: this.owner, name: this.name, cursor }).valueChanges.pipe(
+    return this.moreIssuesGQL.watch(
+      { owner: this.owner, name: this.name, cursor }
+    ).valueChanges.pipe(
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
       map(result => result.data.repository.issues),
       mergeMap(issues => {
@@ -168,6 +218,10 @@ export class IssuesComponent implements OnInit {
         } else {
           return of(issuesMap);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }

@@ -9994,6 +9994,17 @@ export type IssuesQuery = { __typename?: "Query" } & {
   >;
 };
 
+export type RateLimitQueryVariables = {};
+
+export type RateLimitQuery = { __typename?: "Query" } & {
+  rateLimit: Maybe<
+    { __typename?: "RateLimit" } & Pick<
+      RateLimit,
+      "limit" | "remaining" | "resetAt"
+    >
+  >;
+};
+
 export type MoreReleasesQueryVariables = {
   owner: Scalars["String"];
   name: Scalars["String"];
@@ -10204,6 +10215,12 @@ export type ViewerQueryVariables = {};
 
 export type ViewerQuery = { __typename?: "Query" } & {
   viewer: { __typename?: "User" } & Pick<User, "name" | "login">;
+  rateLimit: Maybe<
+    { __typename?: "RateLimit" } & Pick<
+      RateLimit,
+      "limit" | "remaining" | "resetAt"
+    >
+  >;
 };
 
 export const MoreForksDocument = gql`
@@ -10309,6 +10326,25 @@ export const IssuesDocument = gql`
 })
 export class IssuesGQL extends Apollo.Query<IssuesQuery, IssuesQueryVariables> {
   document = IssuesDocument;
+}
+export const RateLimitDocument = gql`
+  query RateLimit {
+    rateLimit {
+      limit
+      remaining
+      resetAt
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class RateLimitGQL extends Apollo.Query<
+  RateLimitQuery,
+  RateLimitQueryVariables
+> {
+  document = RateLimitDocument;
 }
 export const MoreReleasesDocument = gql`
   query MoreReleases($owner: String!, $name: String!, $cursor: String!) {
@@ -10488,6 +10524,11 @@ export const ViewerDocument = gql`
     viewer {
       name
       login
+    }
+    rateLimit {
+      limit
+      remaining
+      resetAt
     }
   }
 `;

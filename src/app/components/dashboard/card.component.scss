@@ -12,6 +12,15 @@ h2 {
   margin: 0 0 0 8px;
   font-size: 18px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+h2 mat-icon {
+  margin-left: 0.25rem;
+}
+header .mat-badge-content {
+  top: 0 !important;
+  right: 0 !important;
 }
 .more-button {
   margin-left: auto;
@@ -21,6 +30,7 @@ section {
   flex-grow: 1;
   margin: 0;
   position: relative;
+  overflow: hidden;
 }
 mat-spinner {
   position: absolute;

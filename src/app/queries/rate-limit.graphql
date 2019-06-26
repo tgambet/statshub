@@ -1,8 +1,4 @@
-query Viewer {
-  viewer {
-    name
-    login
-  }
+query RateLimit {
   rateLimit {
     limit
     remaining

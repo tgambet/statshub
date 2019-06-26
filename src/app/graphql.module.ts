@@ -19,6 +19,11 @@ export function createApollo(httpLink: HttpLink) {
   return {
     link: authLink.concat(http),
     cache: new InMemoryCache(),
+    defaultOptions: {
+      watchQuery: {
+        errorPolicy: 'all'
+      }
+    }
   };
 }
 

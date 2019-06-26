@@ -1,9 +1,10 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
-import {concat, Observable, of} from 'rxjs';
-import {filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
+import {concat, EMPTY, Observable, of} from 'rxjs';
+import {catchError, filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
 
 import {MoreReleasesGQL, ReleasesGQL} from '@app/github.schema';
+import {ApolloError} from 'apollo-client';
 
 interface Release {
   name: string;
@@ -16,8 +17,14 @@ interface Release {
   selector: 'app-downloads',
   template: `
     <header>
-      <h2>Downloads</h2>
-      <button mat-icon-button class="more-button" [matMenuTriggerFor]="menu" aria-label="Toggle menu">
+      <h2>Downloads <mat-icon color="warn"
+                              *ngIf="hasError"
+                              [matTooltip]="getErrors"
+                              aria-label="Errors">warning</mat-icon>
+      </h2>
+      <button mat-icon-button class="more-button"
+              [matMenuTriggerFor]="menu" aria-label="Toggle menu"
+              [matBadge]="hasError && progress < 100 && stopped ? '1' : ''" matBadgeSize="small" matBadgeColor="primary">
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">
@@ -34,7 +41,7 @@ interface Release {
           Stop
         </button>
         <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(); stopped = false">
-          <mat-icon>play_arrow</mat-icon>
+          <mat-icon color="primary">play_arrow</mat-icon>
           Resume
         </button>
         <mat-divider></mat-divider>
@@ -84,6 +91,8 @@ export class DownloadsComponent implements OnInit {
   releases$: Observable<Release[]>;
   data$: Observable<Release[]>;
 
+  errors: string[] = [];
+
   sortedByDate = false;
   sort = (a, b) => b.downloadCount - a.downloadCount;
 
@@ -92,6 +101,14 @@ export class DownloadsComponent implements OnInit {
 
   get progress() {
     return this.releaseCount > 0 ? this.loadedCount / this.releaseCount * 100 : 100;
+  }
+
+  get hasError() {
+    return this.errors.length > 0;
+  }
+
+  get getErrors() {
+    return this.errors.join('\n');
   }
 
   constructor(
@@ -150,7 +167,13 @@ export class DownloadsComponent implements OnInit {
   loadReleases(): Observable<Release[]> {
     return this.releasesGQL.watch({ owner: this.owner, name: this.name }).valueChanges.pipe(
       tap(result => this.loading = result.loading),
-      // tap(result => console.log(result.errors)),
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
       map(result => result.data.repository.releases),
       mergeMap(releases => {
@@ -171,12 +194,23 @@ export class DownloadsComponent implements OnInit {
         } else {
           return of(releasesMap);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }
 
   loadMoreReleases(cursor: string): Observable<Release[]> {
     return this.moreReleasesGQL.watch({ owner: this.owner, name: this.name, cursor }).valueChanges.pipe(
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
       map(result => result.data.repository.releases),
       mergeMap(releases => {
@@ -196,6 +230,10 @@ export class DownloadsComponent implements OnInit {
         } else {
           return of(releasesMap);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }

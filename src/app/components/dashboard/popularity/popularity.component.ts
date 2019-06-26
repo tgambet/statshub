@@ -1,15 +1,23 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {ForksGQL, MoreForksGQL, MoreStargazersGQL, RepositoryGQL, StargazersGQL} from '@app/github.schema';
-import {concatMap, filter, first, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
-import {combineLatest, concat, Observable, of} from 'rxjs';
+import {catchError, concatMap, filter, first, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
+import {combineLatest, concat, EMPTY, Observable, of} from 'rxjs';
 import {ActivatedRoute} from '@angular/router';
+import {ApolloError} from 'apollo-client';
+import {Apollo} from 'apollo-angular';
 
 @Component({
   selector: 'app-popularity',
   template: `
     <header>
-      <h2>Popularity</h2>
-      <button mat-icon-button class="more-button" [matMenuTriggerFor]="menu" aria-label="Toggle menu">
+      <h2>Popularity <mat-icon color="warn"
+                               *ngIf="hasError"
+                               [matTooltip]="getErrors"
+                               aria-label="Errors">warning</mat-icon>
+      </h2>
+      <button mat-icon-button class="more-button"
+              [matMenuTriggerFor]="menu" aria-label="Toggle menu"
+              [matBadge]="hasError && progress < 100 && stopped ? '1' : ''" matBadgeSize="small" matBadgeColor="primary">
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">
@@ -26,22 +34,44 @@ import {ActivatedRoute} from '@angular/router';
           Stop
         </button>
         <button mat-menu-item *ngIf="progress < 100 && stopped" (click)="init(true); stopped = false">
-          <mat-icon>play_arrow</mat-icon>
+          <mat-icon color="primary">play_arrow</mat-icon>
           Resume
         </button>
       </mat-menu>
     </header>
     <section>
       <charts4ng-line *ngIf="data$ | async as data else load" [data]="data" [legends]="legends"></charts4ng-line>
-      <ng-template #load>
+      <ng-template #load *ngIf="!waiting">
         <mat-spinner diameter="40"></mat-spinner>
       </ng-template>
+      <div class="confirm" *ngIf="waiting">
+        <p>That's a lot of stars!</p>
+        <p>Computing the popularity graph for this repository will cost you at least {{ expectedRequests }} requests.</p>
+        <button mat-raised-button color="primary" (click)="waiting = false; stopped = false; init()">
+          DO IT!
+        </button>
+      </div>
     </section>
     <footer>
-      <mat-progress-bar *ngIf="progress < 100" [mode]="loading ? 'query' : 'determinate'" [value]="progress"></mat-progress-bar>
+      <mat-progress-bar *ngIf="progress < 100 && !waiting" [mode]="loading ? 'query' : 'determinate'" [value]="progress"></mat-progress-bar>
     </footer>
   `,
   styleUrls: ['../card.component.scss'],
+  styles: [`
+    .confirm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: center;
+    }
+    .confirm p {
+      margin: 0 0 1rem 0;
+      font-weight: 300;
+      text-align: center;
+      line-height: 1.5;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PopularityComponent implements OnInit {
@@ -50,6 +80,7 @@ export class PopularityComponent implements OnInit {
   @Output() zoomIn: EventEmitter<void> = new EventEmitter();
   @Output() zoomOut: EventEmitter<void> = new EventEmitter();
 
+  waiting = false;
   loading = true;
   stopped = false;
   loadedCount = 0;
@@ -70,11 +101,26 @@ export class PopularityComponent implements OnInit {
     { name: 'Forks', color: 'steelblue' }
   ];
 
+  errors: string[] = [];
+
   get progress() {
     return this.starCount + this.forkCount > 0 ? this.loadedCount / (this.starCount + this.forkCount) * 100 : 100;
   }
 
+  get expectedRequests() {
+    return Math.floor(this.starCount / 100);
+  }
+
+  get hasError() {
+    return this.errors.length > 0;
+  }
+
+  get getErrors() {
+    return this.errors.join('\n');
+  }
+
   constructor(
+    private apollo: Apollo,
     private repositoryGQL: RepositoryGQL,
     private stargazersGQL: StargazersGQL,
     private moreStargazerGQL: MoreStargazersGQL,
@@ -103,7 +149,12 @@ export class PopularityComponent implements OnInit {
       repo => {
         this.starCount = repo.stargazers.totalCount;
         this.createdAt = new Date(repo.createdAt);
-        this.init();
+        if (this.starCount > 10000) {
+          this.waiting = true;
+          this.stopped = true;
+        } else {
+          this.init();
+        }
         this.cdr.markForCheck();
       }
     );
@@ -153,6 +204,13 @@ export class PopularityComponent implements OnInit {
     return this.stargazersGQL.watch({ owner: this.owner, name: this.name })
       .valueChanges.pipe(
         tap(result => this.loading = result.loading),
+        tap(result => {
+          if (result.errors) {
+            this.errors = result.errors.map(e => e.message);
+            this.stopLoading.emit();
+            this.stopped = true;
+          }
+        }),
         filter(result => !result.loading),
         map(result => result.data.repository.stargazers),
         mergeMap(stargazers => {
@@ -165,12 +223,30 @@ export class PopularityComponent implements OnInit {
             return of(stargazers.edges);
           }
         }),
+        catchError((error: ApolloError) => {
+          console.error('ApolloError', error);
+          return EMPTY;
+        })
       );
   }
 
   loadMoreStars(cursor: string): Observable<{ starredAt: string }[]> {
     return this.moreStargazerGQL.watch({ owner: this.owner, name: this.name, cursor }).valueChanges.pipe(
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       map(result => result.data.repository.stargazers),
       mergeMap(stargazers => {
         if (stargazers.pageInfo.hasNextPage) {
@@ -181,12 +257,23 @@ export class PopularityComponent implements OnInit {
         } else {
           return of(stargazers.edges);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }
 
   loadForks(): Observable<{ forkedAt: string }[]> {
     return this.forksGQL.watch({ owner: this.owner, name: this.name }).valueChanges.pipe(
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       tap(forks => this.forkCount = forks.totalCount),
@@ -200,12 +287,23 @@ export class PopularityComponent implements OnInit {
         } else {
           return of(createdAts);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }
 
   loadMoreForks(cursor: string): Observable<{ forkedAt: string }[]> {
     return this.moreForksGQL.watch({ owner: this.owner, name: this.name, cursor }).valueChanges.pipe(
+      tap(result => {
+        if (result.errors) {
+          this.errors = result.errors.map(e => e.message);
+          this.stopLoading.emit();
+          this.stopped = true;
+        }
+      }),
       filter(result => !result.loading),
       map(result => result.data.repository.forks),
       concatMap(forks => {
@@ -218,6 +316,10 @@ export class PopularityComponent implements OnInit {
         } else {
           return of(createdAts);
         }
+      }),
+      catchError((error: ApolloError) => {
+        console.error('ApolloError', error);
+        return EMPTY;
       })
     );
   }
