@@ -20,6 +20,7 @@ import {
 } from '@angular/material';
 import {LayoutModule} from '@angular/cdk/layout';
 import {PipesModule} from '@app/shared/pipes.module';
+import {PortalModule} from '@angular/cdk/portal';
 
 const MODULES = [
   CommonModule,
@@ -42,7 +43,8 @@ const MODULES = [
   MatProgressBarModule,
   MatProgressSpinnerModule,
   MatTooltipModule,
-  MatBadgeModule
+  MatBadgeModule,
+  PortalModule
 ];
 
 @NgModule({

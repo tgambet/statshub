@@ -1,10 +1,10 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnInit} from '@angular/core';
 import {ForksGQL, MoreForksGQL, MoreStargazersGQL, RepositoryGQL, StargazersGQL} from '@app/github.schema';
 import {catchError, concatMap, filter, first, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
 import {combineLatest, concat, EMPTY, Observable, of} from 'rxjs';
 import {ActivatedRoute} from '@angular/router';
 import {ApolloError} from 'apollo-client';
-import {Apollo} from 'apollo-angular';
+import {DashboardService} from '@app/services/dashboard.service';
 
 @Component({
   selector: 'app-popularity',
@@ -21,11 +21,11 @@ import {Apollo} from 'apollo-angular';
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">
-        <button mat-menu-item (click)="zoomIn.emit(); zoomed = true" *ngIf="!zoomed">
+        <button mat-menu-item (click)="zoomIn()" *ngIf="(focused | async) === false">
           <mat-icon>zoom_in</mat-icon>
           Zoom in
         </button>
-        <button mat-menu-item (click)="zoomOut.emit(); zoomed = false" *ngIf="zoomed">
+        <button mat-menu-item (click)="zoomOut()" *ngIf="focused | async">
           <mat-icon>zoom_out</mat-icon>
           Zoom out
         </button>
@@ -76,9 +76,7 @@ import {Apollo} from 'apollo-angular';
 })
 export class PopularityComponent implements OnInit {
 
-  @Input() zoomed;
-  @Output() zoomIn: EventEmitter<void> = new EventEmitter();
-  @Output() zoomOut: EventEmitter<void> = new EventEmitter();
+  focused: Observable<boolean>;
 
   waiting = false;
   loading = true;
@@ -120,7 +118,7 @@ export class PopularityComponent implements OnInit {
   }
 
   constructor(
-    private apollo: Apollo,
+    private dashboard: DashboardService,
     private repositoryGQL: RepositoryGQL,
     private stargazersGQL: StargazersGQL,
     private moreStargazerGQL: MoreStargazersGQL,
@@ -128,7 +126,17 @@ export class PopularityComponent implements OnInit {
     private moreForksGQL: MoreForksGQL,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) {
+    this.focused = this.dashboard.focused$;
+  }
+
+  zoomIn() {
+    this.dashboard.focus('popularity');
+  }
+
+  zoomOut() {
+    this.dashboard.blur();
+  }
 
   ngOnInit() {
     this.owner = this.route.snapshot.paramMap.get('user');

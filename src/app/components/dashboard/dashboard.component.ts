@@ -1,28 +1,33 @@
-import {ChangeDetectionStrategy, Component} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {map, switchMap} from 'rxjs/operators';
 import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
-import {of} from 'rxjs';
+import {Observable, of} from 'rxjs';
 import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
+import {ComponentPortal} from '@angular/cdk/portal';
+import {InformationComponent} from '@app/components/dashboard/information/information.component';
+import {IssuesComponent} from '@app/components/dashboard/issues/issues.component';
+import {LabelsComponent} from '@app/components/dashboard/labels/labels.component';
+import {PopularityComponent} from '@app/components/dashboard/popularity/popularity.component';
+import {DownloadsComponent} from '@app/components/dashboard/downloads/downloads.component';
+import {FilesComponent} from '@app/components/dashboard/files/files.component';
+import {CalendarComponent} from '@app/components/dashboard/calendar/calendar.component';
+import {DashboardService} from '@app/services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
   template: `
     <mat-grid-list cols="4" rowHeight="324px">
-      <mat-grid-tile *ngFor="let card of cards | async"
+      <mat-grid-tile *ngFor="let card of cards | async; trackBy: trackBy"
                      [colspan]="card.size.cols"
                      [rowspan]="card.size.rows"
-                     [class.last]="focusedElement === card.meta.class"
-                     [class.focused]="isFocused && focusedElement === card.meta.class">
+                     [class.last]="isLastFocused(card.meta.class) | async"
+                     [class.focused]="isFocused(card.meta.class) | async">
         <mat-card>
-          <app-parent [type]="card.meta.type"
-                      [zoomed]="isFocused && focusedElement === card.meta.class"
-                      (zoomOut)="isFocused = false"
-                      (zoomIn)="focusedElement = card.meta.class; isFocused = true">
-          </app-parent>
+          <ng-template [cdkPortalOutlet]="components[card.meta.class]"></ng-template>
         </mat-card>
       </mat-grid-tile>
     </mat-grid-list>
-    <div class="backdrop" *ngIf="isFocused" (click)="isFocused = false"></div>
+    <div class="backdrop" *ngIf="focused | async" (click)="blur()"></div>
   `,
   styles: [`
     :host {
@@ -67,10 +72,10 @@ import {DashboardType} from '@app/components/dashboard/dashboard-type.enum';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
 
-  isFocused = false;
-  focusedElement: string;
+  focused: Observable<boolean>;
+
   isSmallScreen: boolean;
   isMediumScreen: boolean;
 
@@ -82,13 +87,23 @@ export class DashboardComponent {
   FILES_CARD =      { class: 'files', type: DashboardType.FILES };
   CALENDAR_CARD =   { class: 'calendar', type: DashboardType.CALENDAR };
 
+  components = {
+    info: new ComponentPortal(InformationComponent),
+    issues: new ComponentPortal(IssuesComponent),
+    labels: new ComponentPortal(LabelsComponent),
+    popularity: new ComponentPortal(PopularityComponent),
+    downloads: new ComponentPortal(DownloadsComponent),
+    files: new ComponentPortal(FilesComponent),
+    calendar: new ComponentPortal(CalendarComponent)
+  };
+
   cards = this.breakpointObserver.observe([
     Breakpoints.XSmall,
     Breakpoints.Small
   ]).pipe(
     switchMap(({ matches }) => {
       if (matches) {
-        this.focusedElement = undefined;
+        // this.focusedElement = undefined;
         this.isSmallScreen = true;
         return of([
           { meta: this.INFO_CARD, size: { cols: 4, rows: 2 } },
@@ -105,7 +120,7 @@ export class DashboardComponent {
       ]).pipe(
         map(bp => {
           if (bp.matches) {
-            this.focusedElement = undefined;
+            // this.focusedElement = undefined;
             this.isMediumScreen = true;
             return [
               { meta: this.INFO_CARD, size: { cols: 2, rows: 2 } },
@@ -132,5 +147,30 @@ export class DashboardComponent {
     })
   );
 
-  constructor(private breakpointObserver: BreakpointObserver) {}
+  constructor(
+    private dashboard: DashboardService,
+    private breakpointObserver: BreakpointObserver,
+  ) {
+    this.focused = this.dashboard.focused$;
+  }
+
+  ngOnInit(): void {}
+
+  isFocused(element: string): Observable<boolean> {
+    return this.dashboard.isFocused(element);
+  }
+
+  isLastFocused(element: string): Observable<boolean> {
+    return this.dashboard.focusedElement$.pipe(
+      map(elem => elem === element)
+    );
+  }
+
+  blur(): void {
+    this.dashboard.blur();
+  }
+
+  trackBy(index: number, item: any) {
+    return item.meta.class;
+  }
 }

@@ -1,10 +1,11 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {concat, EMPTY, Observable, of} from 'rxjs';
 import {catchError, filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
 
 import {MoreReleasesGQL, ReleasesGQL} from '@app/github.schema';
 import {ApolloError} from 'apollo-client';
+import {DashboardService} from '@app/services/dashboard.service';
 
 interface Release {
   name: string;
@@ -28,11 +29,11 @@ interface Release {
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu" xPosition="before">
-        <button mat-menu-item (click)="zoomIn.emit(); zoomed = true" *ngIf="!zoomed">
+        <button mat-menu-item (click)="zoomIn()" *ngIf="(focused | async) === false">
           <mat-icon>zoom_in</mat-icon>
           Zoom in
         </button>
-        <button mat-menu-item (click)="zoomOut.emit(); zoomed = false" *ngIf="zoomed">
+        <button mat-menu-item (click)="zoomOut()" *ngIf="focused | async">
           <mat-icon>zoom_out</mat-icon>
           Zoom out
         </button>
@@ -74,9 +75,7 @@ interface Release {
 })
 export class DownloadsComponent implements OnInit {
 
-  @Input() zoomed: boolean;
-  @Output() zoomIn: EventEmitter<void> = new EventEmitter();
-  @Output() zoomOut: EventEmitter<void> = new EventEmitter();
+  focused: Observable<boolean>;
 
   owner: string;
   name: string;
@@ -112,10 +111,21 @@ export class DownloadsComponent implements OnInit {
   }
 
   constructor(
+    private dashboard: DashboardService,
     private releasesGQL: ReleasesGQL,
     private moreReleasesGQL: MoreReleasesGQL,
     private route: ActivatedRoute
-  ) { }
+  ) {
+    this.focused = this.dashboard.focused$;
+  }
+
+  zoomIn() {
+    this.dashboard.focus('downloads');
+  }
+
+  zoomOut() {
+    this.dashboard.blur();
+  }
 
   ngOnInit() {
     this.owner = this.route.snapshot.paramMap.get('user');
