@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, Component, EventEmitter, OnInit} from '@angular
 import {ActivatedRoute} from '@angular/router';
 import {IssuesGQL, MoreIssuesGQL} from '@app/github.schema';
 import {concat, EMPTY, Observable, of} from 'rxjs';
-import {catchError, filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
+import {catchError, filter, map, switchMap, takeUntil, tap} from 'rxjs/operators';
 import {ApolloError} from 'apollo-client';
 import {DashboardService} from '@app/services/dashboard.service';
 
@@ -174,7 +174,7 @@ export class IssuesComponent implements OnInit {
       filter(result => !result.loading),
       map(result => result.data.repository.issues),
       tap(issues => this.issueCount = issues.totalCount),
-      mergeMap(issues => {
+      switchMap(issues => {
         const issuesMap = issues.nodes.map(issue => ({
           closed: issue.closed,
           createdAt: new Date(issue.createdAt),
@@ -211,7 +211,7 @@ export class IssuesComponent implements OnInit {
       }),
       filter(result => !result.loading),
       map(result => result.data.repository.issues),
-      mergeMap(issues => {
+      switchMap(issues => {
         const issuesMap = issues.nodes.map(issue => ({
           closed: issue.closed,
           createdAt: new Date(issue.createdAt),

@@ -9882,6 +9882,79 @@ export enum UserStatusOrderField {
   UpdatedAt = "UPDATED_AT"
 }
 
+export type MoreCommitsQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  cursor: Scalars["String"];
+};
+
+export type MoreCommitsQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & Pick<Repository, "nameWithOwner"> & {
+        object: Maybe<
+          { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
+            __typename?: "Commit";
+          } & {
+            history: { __typename?: "CommitHistoryConnection" } & {
+              pageInfo: { __typename?: "PageInfo" } & Pick<
+                PageInfo,
+                "hasNextPage" | "endCursor"
+              >;
+              nodes: Maybe<
+                Array<
+                  Maybe<
+                    { __typename?: "Commit" } & Pick<
+                      Commit,
+                      "additions" | "deletions" | "committedDate"
+                    >
+                  >
+                >
+              >;
+            };
+          })
+        >;
+      }
+  >;
+};
+
+export type CommitsQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  since: Scalars["GitTimestamp"];
+};
+
+export type CommitsQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & Pick<Repository, "nameWithOwner"> & {
+        object: Maybe<
+          { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
+            __typename?: "Commit";
+          } & {
+            history: { __typename?: "CommitHistoryConnection" } & Pick<
+              CommitHistoryConnection,
+              "totalCount"
+            > & {
+                pageInfo: { __typename?: "PageInfo" } & Pick<
+                  PageInfo,
+                  "hasNextPage" | "endCursor"
+                >;
+                nodes: Maybe<
+                  Array<
+                    Maybe<
+                      { __typename?: "Commit" } & Pick<
+                        Commit,
+                        "additions" | "deletions" | "committedDate"
+                      >
+                    >
+                  >
+                >;
+              };
+          })
+        >;
+      }
+  >;
+};
+
 export type MoreForksQueryVariables = {
   owner: Scalars["String"];
   name: Scalars["String"];
@@ -10299,6 +10372,71 @@ export type ViewerQuery = { __typename?: "Query" } & {
   >;
 };
 
+export const MoreCommitsDocument = gql`
+  query MoreCommits($owner: String!, $name: String!, $cursor: String!) {
+    repository(owner: $owner, name: $name) {
+      nameWithOwner
+      object(expression: "master") {
+        ... on Commit {
+          history(first: 100, after: $cursor) {
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              additions
+              deletions
+              committedDate
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class MoreCommitsGQL extends Apollo.Query<
+  MoreCommitsQuery,
+  MoreCommitsQueryVariables
+> {
+  document = MoreCommitsDocument;
+}
+export const CommitsDocument = gql`
+  query Commits($owner: String!, $name: String!, $since: GitTimestamp!) {
+    repository(owner: $owner, name: $name) {
+      nameWithOwner
+      object(expression: "master") {
+        ... on Commit {
+          history(first: 100, since: $since) {
+            totalCount
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+            nodes {
+              additions
+              deletions
+              committedDate
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class CommitsGQL extends Apollo.Query<
+  CommitsQuery,
+  CommitsQueryVariables
+> {
+  document = CommitsDocument;
+}
 export const MoreForksDocument = gql`
   query MoreForks($owner: String!, $name: String!, $cursor: String!) {
     repository(owner: $owner, name: $name) {
