@@ -24,12 +24,12 @@ import * as d3 from 'd3';
         <g class="group" *ngFor="let group of chords.groups">
           <path [attr.fill]="color(group.index)" [attr.d]="arc(group)" stroke="#424242"></path>
           <g class="ticks">
-            <g class="tick" *ngFor="let tick of groupTicks(group, 1e3); let i = index" [attr.transform]="tickTransform(tick)">
+            <g class="tick" *ngFor="let tick of groupTicks(group); let i = index" [attr.transform]="tickTransform(tick)">
               <line x2="4" stroke="currentColor"></line>
-              <text x="6" dy=".35em"
-                    *ngIf="i !== 0 && i % 5 === 0"
-                    [attr.transform]="tick.angle > PI ? 'rotate(180) translate(-12)' : null"
-                    [attr.text-anchor]="tick.angle > PI ? 'end' : null">
+              <text x="-2" dy=".35em"
+                    *ngIf="i % 2 === 0"
+                    [attr.transform]="tick.angle > PI ? 'rotate(180) translate(4)' : null"
+                    [attr.text-anchor]="tick.angle > PI ? 'start' : 'end'">
                 {{ format(tick.value) }}
               </text>
             </g>
@@ -72,6 +72,12 @@ import * as d3 from 'd3';
     .chords .group:hover .group-legend {
       display: unset;
     }
+    .chords .ticks {
+      display: none;
+    }
+    .chords .group:hover .ticks {
+      display: unset;
+    }
   `],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -98,6 +104,8 @@ export class ChordsComponent implements OnInit, OnChanges {
   format;
   color;
 
+  formatValue = 1;
+
   constructor(private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
@@ -116,8 +124,6 @@ export class ChordsComponent implements OnInit, OnChanges {
     this.chord = d3.chord()
       .padAngle(0)
       .sortSubgroups(d3.descending);
-
-    this.format = d3.formatPrefix(',.0', 1e3);
   }
 
   @HostListener('window:resize')
@@ -125,10 +131,23 @@ export class ChordsComponent implements OnInit, OnChanges {
     this.height = this.svgRef.nativeElement.clientHeight;
     this.width = this.svgRef.nativeElement.clientWidth;
 
-    this.outerRadius = Math.min(this.width, this.height) * 0.5 - 20;
+    this.outerRadius = Math.min(this.width, this.height) * 0.5;
     this.innerRadius = this.outerRadius - 15;
 
     this.chords = this.chord(this.data);
+
+    const total = this.data.reduce((p, c) => {
+      return p + c.reduce((a, b) => a + b);
+    }, 0);
+
+    if (total > 100) {
+      this.formatValue = 1e1;
+    }
+    if (total > 1000) {
+      this.formatValue = 1e2;
+    }
+
+    this.format = d3.formatPrefix(',.0', this.formatValue);
 
     this.arc = d3.arc()
       .innerRadius(this.innerRadius)
@@ -146,15 +165,15 @@ export class ChordsComponent implements OnInit, OnChanges {
     this.cdr.markForCheck();
   }
 
-  groupTicks(d, step) {
+  groupTicks(d) {
     const k = (d.endAngle - d.startAngle) / d.value;
-    return d3.range(0, d.value, step).map(value => {
+    return d3.range(0, d.value, this.formatValue).map(value => {
       return { value, angle: value * k + d.startAngle };
     });
   }
 
   tickTransform(d) {
-    return `rotate(${d.angle * 180 / Math.PI - 90}) translate(${this.outerRadius},0)`;
+    return `rotate(${d.angle * 180 / Math.PI - 90}) translate(${this.innerRadius - 6},0)`;
   }
 
   getLegend(i: number) {

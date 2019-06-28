@@ -21,10 +21,12 @@ interface Label {
   selector: 'app-labels',
   template: `
     <header>
-      <h2>Labels <mat-icon color="warn"
-                           *ngIf="hasError"
-                           [matTooltip]="getErrors"
-                           aria-label="Errors">warning</mat-icon>
+      <h2>Labels
+        <mat-icon matTooltip="Relationship between open issues labels">info</mat-icon>
+        <mat-icon color="warn"
+                  *ngIf="hasError"
+                  [matTooltip]="getErrors"
+                  aria-label="Errors">warning</mat-icon>
       </h2>
       <button mat-icon-button class="more-button"
               [matMenuTriggerFor]="menu" aria-label="Toggle menu"
@@ -134,7 +136,6 @@ export class LabelsComponent implements OnInit {
 
     this.data$ =
       this.labels$.pipe(
-        tap(ls => console.log(ls)),
         switchMap(labels => this.issues$.pipe(
           map(issues => {
             const indexByName = new Map();
