@@ -75,7 +75,6 @@ export class LabelsComponent implements OnInit {
   loadedCount = 0;
   stopLoading: EventEmitter<void> = new EventEmitter();
 
-  labelCount = 0;
   issueCount = 0;
 
   issues$: Observable<Issue[]>;
@@ -85,7 +84,7 @@ export class LabelsComponent implements OnInit {
   errors: string[] = [];
 
   get progress() {
-    return this.labelCount > 0 ? this.loadedCount / this.labelCount * 100 : 100;
+    return this.issueCount > 0 ? this.loadedCount / this.issueCount * 100 : 100;
   }
 
   get hasError() {
@@ -136,7 +135,7 @@ export class LabelsComponent implements OnInit {
     this.data$ =
       this.labels$.pipe(
         tap(ls => console.log(ls)),
-        switchMap(labels => this.loadIssues().pipe(
+        switchMap(labels => this.issues$.pipe(
           map(issues => {
             const indexByName = new Map();
             const nameByIndex = new Map();
