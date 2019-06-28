@@ -7,9 +7,15 @@ query Issues($owner: String!, $name: String!) {
         endCursor
       }
       nodes {
+        number
         closed
         closedAt
         createdAt
+        labels(first: 100) {
+          nodes {
+            name
+          }
+        }
       }
     }
   }

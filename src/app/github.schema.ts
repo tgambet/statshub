@@ -9953,8 +9953,18 @@ export type MoreIssuesQuery = { __typename?: "Query" } & {
             Maybe<
               { __typename?: "Issue" } & Pick<
                 Issue,
-                "closed" | "closedAt" | "createdAt"
-              >
+                "number" | "closed" | "closedAt" | "createdAt"
+              > & {
+                  labels: Maybe<
+                    { __typename?: "LabelConnection" } & {
+                      nodes: Maybe<
+                        Array<
+                          Maybe<{ __typename?: "Label" } & Pick<Label, "name">>
+                        >
+                      >;
+                    }
+                  >;
+                }
             >
           >
         >;
@@ -9984,8 +9994,20 @@ export type IssuesQuery = { __typename?: "Query" } & {
               Maybe<
                 { __typename?: "Issue" } & Pick<
                   Issue,
-                  "closed" | "closedAt" | "createdAt"
-                >
+                  "number" | "closed" | "closedAt" | "createdAt"
+                > & {
+                    labels: Maybe<
+                      { __typename?: "LabelConnection" } & {
+                        nodes: Maybe<
+                          Array<
+                            Maybe<
+                              { __typename?: "Label" } & Pick<Label, "name">
+                            >
+                          >
+                        >;
+                      }
+                    >;
+                  }
               >
             >
           >;
@@ -10284,9 +10306,15 @@ export const MoreIssuesDocument = gql`
           endCursor
         }
         nodes {
+          number
           closed
           closedAt
           createdAt
+          labels(first: 100) {
+            nodes {
+              name
+            }
+          }
         }
       }
     }
@@ -10312,9 +10340,15 @@ export const IssuesDocument = gql`
           endCursor
         }
         nodes {
+          number
           closed
           closedAt
           createdAt
+          labels(first: 100) {
+            nodes {
+              name
+            }
+          }
         }
       }
     }

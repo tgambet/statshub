@@ -90,6 +90,7 @@ export class PieComponent implements OnInit, OnChanges {
   color;
 
   total: string;
+
   get noValue() {
     return this.total === '0';
   }

@@ -127,8 +127,6 @@ export class IssuesComponent implements OnInit {
 
     this.data$ = this.issues$.pipe(
       map(issues => {
-        this.loadedCount = issues.length;
-
         const allIssues = issues.map(issue => ({
           date: issue.createdAt,
           value: issues.indexOf(issue) + 1
@@ -175,9 +173,8 @@ export class IssuesComponent implements OnInit {
       }),
       filter(result => !result.loading),
       map(result => result.data.repository.issues),
+      tap(issues => this.issueCount = issues.totalCount),
       mergeMap(issues => {
-        this.issueCount = issues.totalCount;
-
         const issuesMap = issues.nodes.map(issue => ({
           closed: issue.closed,
           createdAt: new Date(issue.createdAt),
@@ -193,6 +190,7 @@ export class IssuesComponent implements OnInit {
           return of(issuesMap);
         }
       }),
+      tap(issues => this.loadedCount = issues.length),
       catchError((error: ApolloError) => {
         console.error('ApolloError', error);
         return EMPTY;

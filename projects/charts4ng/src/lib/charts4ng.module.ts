@@ -2,10 +2,12 @@ import {NgModule} from '@angular/core';
 import {LineComponent} from './line/line.component';
 import {CommonModule} from '@angular/common';
 import {PieComponent} from './pie/pie.component';
+import {ChordsComponent} from './chords/chords.component';
 
 const COMPONENTS = [
   LineComponent,
-  PieComponent
+  PieComponent,
+  ChordsComponent
 ];
 
 @NgModule({
