@@ -18,12 +18,12 @@ import * as d3 from 'd3';
   template: `
     <svg class="chords" #svg [attr.viewBox]="(- width / 2) + ' ' + (- height / 2) + ' ' + width + ' ' + height">
       <g *ngFor="let group of chords.groups">
-        <path fill="red" [attr.d]="arc(group)"></path>
+        <path [attr.fill]="color(group.index)" [attr.d]="arc(group)"></path>
         <g>
           <g *ngFor="let tick of groupTicks(group, 1e3); let i = index" [attr.transform]="tickTransform(tick)">
             <line x2="4" stroke="currentColor"></line>
             <text x="6" dy=".35em"
-                  *ngIf="i % 5 === 0"
+                  *ngIf="i !== 0 && i % 5 === 0"
                   [attr.transform]="tick.angle > PI ? 'rotate(180) translate(-12)' : null"
                   [attr.text-anchor]="tick.angle > PI ? 'end' : null">
               {{ format(tick.value) }}
@@ -31,8 +31,8 @@ import * as d3 from 'd3';
           </g>
         </g>
       </g>
-      <g fill-opacity="0.67">
-        <path *ngFor="let chord of chords" [attr.d]="ribbon(chord)" fill="steelblue"></path>
+      <g fill-opacity="0.5">
+        <path *ngFor="let chord of chords" [attr.d]="ribbon(chord)" [attr.fill]="color(chord.source.index)"></path>
       </g>
     </svg>
   `,
@@ -54,6 +54,7 @@ import * as d3 from 'd3';
 export class ChordsComponent implements OnInit, OnChanges {
 
   @Input() data: number[][] = [];
+  @Input() legend: { name: string, color: string }[] = [];
 
   @ViewChild('svg', { static: true })
   private svgRef: ElementRef;
@@ -70,6 +71,7 @@ export class ChordsComponent implements OnInit, OnChanges {
   arc;
   ribbon;
   format;
+  color;
 
   constructor(private cdr: ChangeDetectorRef) { }
 
@@ -109,6 +111,10 @@ export class ChordsComponent implements OnInit, OnChanges {
 
     this.ribbon = d3.ribbon()
       .radius(Math.max(0, this.innerRadius));
+
+    this.color = d3.scaleOrdinal<number, {}>()
+      .domain(d3.range(this.legend.length))
+      .range(this.legend.map(l => l.color));
 
     this.cdr.markForCheck();
   }

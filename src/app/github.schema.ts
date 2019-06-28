@@ -10016,6 +10016,30 @@ export type IssuesQuery = { __typename?: "Query" } & {
   >;
 };
 
+export type LabelsQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+};
+
+export type LabelsQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      labels: Maybe<
+        { __typename?: "LabelConnection" } & Pick<
+          LabelConnection,
+          "totalCount"
+        > & {
+            nodes: Maybe<
+              Array<
+                Maybe<{ __typename?: "Label" } & Pick<Label, "name" | "color">>
+              >
+            >;
+          }
+      >;
+    }
+  >;
+};
+
 export type RateLimitQueryVariables = {};
 
 export type RateLimitQuery = { __typename?: "Query" } & {
@@ -10360,6 +10384,26 @@ export const IssuesDocument = gql`
 })
 export class IssuesGQL extends Apollo.Query<IssuesQuery, IssuesQueryVariables> {
   document = IssuesDocument;
+}
+export const LabelsDocument = gql`
+  query Labels($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      labels(first: 100) {
+        totalCount
+        nodes {
+          name
+          color
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class LabelsGQL extends Apollo.Query<LabelsQuery, LabelsQueryVariables> {
+  document = LabelsDocument;
 }
 export const RateLimitDocument = gql`
   query RateLimit {

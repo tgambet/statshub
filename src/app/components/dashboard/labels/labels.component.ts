@@ -2,14 +2,19 @@ import {ChangeDetectionStrategy, Component, EventEmitter, OnInit} from '@angular
 import {concat, EMPTY, Observable, of} from 'rxjs';
 import {DashboardService} from '@app/services/dashboard.service';
 import {ActivatedRoute} from '@angular/router';
-import {catchError, filter, map, mergeMap, takeUntil, tap} from 'rxjs/operators';
+import {catchError, filter, map, switchMap, takeUntil, tap} from 'rxjs/operators';
 import {ApolloError} from 'apollo-client';
-import {IssuesGQL, MoreIssuesGQL} from '@app/github.schema';
+import {IssuesGQL, LabelsGQL, MoreIssuesGQL} from '@app/github.schema';
 
 interface Issue {
   number: number;
   closed: boolean;
   labels: string[];
+}
+
+interface Label {
+  name: string;
+  color: string;
 }
 
 @Component({
@@ -46,7 +51,7 @@ interface Issue {
       </mat-menu>
     </header>
     <section>
-      <charts4ng-chords *ngIf="data$ | async as data" [data]="data"></charts4ng-chords>
+      <charts4ng-chords *ngIf="data$ | async as data" [data]="data.matrix" [legend]="data.legends"></charts4ng-chords>
       <ng-template #load>
         <mat-spinner diameter="40"></mat-spinner>
       </ng-template>
@@ -73,7 +78,9 @@ export class LabelsComponent implements OnInit {
   labelCount = 0;
   issueCount = 0;
 
-  data$: Observable<any[]>;
+  issues$: Observable<Issue[]>;
+  labels$: Observable<Label[]>;
+  data$: Observable<{matrix: number[][], legends: {name: string, color: string}[]}>;
 
   errors: string[] = [];
 
@@ -93,6 +100,7 @@ export class LabelsComponent implements OnInit {
     private dashboard: DashboardService,
     private issuesGQL: IssuesGQL,
     private moreIssuesGQL: MoreIssuesGQL,
+    private labelsGQL: LabelsGQL,
     private route: ActivatedRoute
   ) {
     this.focused = this.dashboard.focused$;
@@ -118,61 +126,77 @@ export class LabelsComponent implements OnInit {
   }
 
   init() {
-    this.data$ = this.loadIssues().pipe(
+    this.issues$ = this.loadIssues().pipe(
       takeUntil(this.stopLoading.asObservable()),
-      map(issues => issues.filter(issue => !issue.closed)),
-      map(issues => {
-        const indexByName = new Map();
-        const nameByIndex = new Map();
-        const matrix = [];
-        let n = 0;
-
-        const labels = issues.reduce((obj, issue) => {
-          issue.labels.forEach(label => {
-            if (!obj.hasOwnProperty(label)) {
-              obj[label] = [];
-            }
-            obj[label].push(issue.number);
-          });
-          return obj;
-        }, { });
-
-        const labelsArray = Object.keys(labels)
-          .map(key => [key, labels[key]])
-          .sort((a, b) => b[1].length - a[1].length);
-
-        labelsArray.forEach(d => {
-          indexByName.set(d[0], n);
-          nameByIndex.set(n, d[0]);
-          n++;
-        });
-
-        labelsArray.forEach(label => {
-          const labelName = label[0];
-          const labelIssues = label[1];
-          const source = indexByName.get(labelName);
-          let row = matrix[source];
-          if (!row) {
-            row = matrix[source] = Array.from({length: n}).fill(0);
-          }
-          const imported = issues
-            .filter(issue => labelIssues.includes(issue.number))
-            .reduce((a, b) => [...a, b.labels.filter(bl => bl !== labelName)], []);
-
-          imported.forEach(array => {
-            if (array.length === 0) {
-              row[source]++;
-            } else {
-              array.forEach(l => row[indexByName.get(l)]++);
-            }
-          });
-        });
-
-        console.log(matrix);
-
-        return matrix;
-      })
+      map(issues => issues.filter(issue => !issue.closed))
     );
+
+    this.labels$ = this.loadLabels();
+
+    this.data$ =
+      this.labels$.pipe(
+        tap(ls => console.log(ls)),
+        switchMap(labels => this.loadIssues().pipe(
+          map(issues => {
+            const indexByName = new Map();
+            const nameByIndex = new Map();
+            const matrix = [];
+            let n = 0;
+
+            const issuesLabels = issues.reduce((obj, issue) => {
+              issue.labels.forEach(label => {
+                if (!obj.hasOwnProperty(label)) {
+                  obj[label] = [];
+                }
+                obj[label].push(issue.number);
+              });
+              return obj;
+            }, { });
+
+            const labelsArray = Object.keys(issuesLabels)
+              .map(key => [key, issuesLabels[key]])
+              .sort((a, b) => b[1].length - a[1].length);
+
+            labelsArray.forEach(d => {
+              indexByName.set(d[0], n);
+              nameByIndex.set(n, d[0]);
+              n++;
+            });
+
+            labelsArray.forEach(label => {
+              const labelName = label[0];
+              const labelIssues = label[1];
+              const source = indexByName.get(labelName);
+              let row = matrix[source];
+              if (!row) {
+                row = matrix[source] = Array.from({length: n}).fill(0);
+              }
+              const imported = issues
+                .filter(issue => labelIssues.includes(issue.number))
+                .reduce((a, b) => [...a, b.labels.filter(bl => bl !== labelName)], []);
+
+              imported.forEach(array => {
+                if (array.length === 0) {
+                  row[source]++;
+                } else {
+                  array.forEach(l => row[indexByName.get(l)]++);
+                }
+              });
+            });
+
+            const legends = labelsArray.map(label => ({
+              name: label[0],
+              color: '#' + labels.find(l => l.name === label[0]).color
+            }));
+
+            return {
+              matrix,
+              legends
+            };
+          })
+        ))
+      );
+
   }
 
   resume(): void {
@@ -186,16 +210,21 @@ export class LabelsComponent implements OnInit {
     this.stopLoading.emit();
   }
 
-/*  loadLabels(): Observable<any> {
-
-  }*/
+  loadLabels(): Observable<Label[]> {
+    return this.labelsGQL.watch(
+      { owner: this.owner, name: this.name },
+    ).valueChanges.pipe(
+      tap(result => this.loading = result.loading),
+      map(result => result.data.repository.labels),
+      map(labels => labels.nodes.map(l => ({name: l.name, color: l.color})))
+    );
+  }
 
   loadIssues(): Observable<Issue[]> {
     return this.issuesGQL.watch(
       { owner: this.owner, name: this.name },
       { fetchPolicy: 'cache-only' }
     ).valueChanges.pipe(
-      tap(result => this.loading = result.loading),
       tap(result => {
         if (result.errors) {
           this.errors = result.errors.map(e => e.message);
@@ -209,7 +238,7 @@ export class LabelsComponent implements OnInit {
       ),
       map(result => result.data.repository.issues),
       tap(issues => this.issueCount = issues.totalCount),
-      mergeMap(issues => {
+      switchMap(issues => {
         const issuesMap = issues.nodes.map(issue => ({
           number: issue.number,
           closed: issue.closed,
@@ -250,7 +279,7 @@ export class LabelsComponent implements OnInit {
         result.data.repository.issues !== undefined
       ),
       map(result => result.data.repository.issues),
-      mergeMap(issues => {
+      switchMap(issues => {
         const issuesMap = issues.nodes.map(issue => ({
           number: issue.number,
           closed: issue.closed,
