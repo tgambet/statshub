@@ -153,9 +153,21 @@ export class LabelsComponent implements OnInit {
               return obj;
             }, { });
 
-            const labelsArray = Object.keys(issuesLabels)
+            let labelsArray = Object.keys(issuesLabels)
               .map(key => [key, issuesLabels[key]])
               .sort((a, b) => b[1].length - a[1].length);
+
+            const maxLabels = 30;
+
+            if (labelsArray.length > maxLabels) {
+              labelsArray = [
+                ...labelsArray.slice(0, maxLabels),
+                labelsArray.slice(maxLabels).reduce((p, c) => {
+                  p[1].push(...c[1]);
+                  return p;
+                }, ['other labels', []])
+              ];
+            }
 
             labelsArray.forEach(d => {
               indexByName.set(d[0], n);
@@ -186,7 +198,7 @@ export class LabelsComponent implements OnInit {
 
             const legends = labelsArray.map(label => ({
               name: label[0],
-              color: '#' + labels.find(l => l.name === label[0]).color
+              color: '#' + (labels.find(l => l.name === label[0]) && labels.find(l => l.name === label[0]).color || 'fff')
             }));
 
             return {
