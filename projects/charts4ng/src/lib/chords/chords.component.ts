@@ -22,7 +22,7 @@ import * as d3 from 'd3';
       </g>
       <g class="groups">
         <g class="group" *ngFor="let group of chords.groups">
-          <path [attr.fill]="color(group.index)" [attr.d]="arc(group)"></path>
+          <path [attr.fill]="color(group.index)" [attr.d]="arc(group)" stroke="#424242"></path>
           <g class="ticks">
             <g class="tick" *ngFor="let tick of groupTicks(group, 1e3); let i = index" [attr.transform]="tickTransform(tick)">
               <line x2="4" stroke="currentColor"></line>
@@ -114,7 +114,7 @@ export class ChordsComponent implements OnInit, OnChanges {
 
   init() {
     this.chord = d3.chord()
-      .padAngle(0.025)
+      .padAngle(0)
       .sortSubgroups(d3.descending);
 
     this.format = d3.formatPrefix(',.0', 1e3);
@@ -126,7 +126,7 @@ export class ChordsComponent implements OnInit, OnChanges {
     this.width = this.svgRef.nativeElement.clientWidth;
 
     this.outerRadius = Math.min(this.width, this.height) * 0.5 - 20;
-    this.innerRadius = this.outerRadius - 10;
+    this.innerRadius = this.outerRadius - 15;
 
     this.chords = this.chord(this.data);
 
@@ -135,7 +135,7 @@ export class ChordsComponent implements OnInit, OnChanges {
       .outerRadius(this.outerRadius);
 
     this.ribbon = d3.ribbon()
-      .radius(Math.max(0, this.innerRadius - 1));
+      .radius(Math.max(0, this.innerRadius));
 
     this.color = d3.scaleOrdinal<number, {}>()
       .domain(d3.range(this.legend.length))
