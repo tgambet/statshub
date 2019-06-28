@@ -10016,6 +10016,32 @@ export type IssuesQuery = { __typename?: "Query" } & {
   >;
 };
 
+export type MoreLabelsQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  cursor: Scalars["String"];
+};
+
+export type MoreLabelsQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      labels: Maybe<
+        { __typename?: "LabelConnection" } & {
+          pageInfo: { __typename?: "PageInfo" } & Pick<
+            PageInfo,
+            "endCursor" | "hasNextPage"
+          >;
+          nodes: Maybe<
+            Array<
+              Maybe<{ __typename?: "Label" } & Pick<Label, "name" | "color">>
+            >
+          >;
+        }
+      >;
+    }
+  >;
+};
+
 export type LabelsQueryVariables = {
   owner: Scalars["String"];
   name: Scalars["String"];
@@ -10029,6 +10055,10 @@ export type LabelsQuery = { __typename?: "Query" } & {
           LabelConnection,
           "totalCount"
         > & {
+            pageInfo: { __typename?: "PageInfo" } & Pick<
+              PageInfo,
+              "endCursor" | "hasNextPage"
+            >;
             nodes: Maybe<
               Array<
                 Maybe<{ __typename?: "Label" } & Pick<Label, "name" | "color">>
@@ -10385,11 +10415,41 @@ export const IssuesDocument = gql`
 export class IssuesGQL extends Apollo.Query<IssuesQuery, IssuesQueryVariables> {
   document = IssuesDocument;
 }
+export const MoreLabelsDocument = gql`
+  query MoreLabels($owner: String!, $name: String!, $cursor: String!) {
+    repository(owner: $owner, name: $name) {
+      labels(first: 100, after: $cursor) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        nodes {
+          name
+          color
+        }
+      }
+    }
+  }
+`;
+
+@Injectable({
+  providedIn: "root"
+})
+export class MoreLabelsGQL extends Apollo.Query<
+  MoreLabelsQuery,
+  MoreLabelsQueryVariables
+> {
+  document = MoreLabelsDocument;
+}
 export const LabelsDocument = gql`
   query Labels($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
       labels(first: 100) {
         totalCount
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
         nodes {
           name
           color

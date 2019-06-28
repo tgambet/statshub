@@ -4,7 +4,7 @@ import {DashboardService} from '@app/services/dashboard.service';
 import {ActivatedRoute} from '@angular/router';
 import {catchError, filter, map, switchMap, takeUntil, tap} from 'rxjs/operators';
 import {ApolloError} from 'apollo-client';
-import {IssuesGQL, LabelsGQL, MoreIssuesGQL} from '@app/github.schema';
+import {IssuesGQL, LabelsGQL, MoreIssuesGQL, MoreLabelsGQL} from '@app/github.schema';
 
 interface Issue {
   number: number;
@@ -53,16 +53,32 @@ interface Label {
       </mat-menu>
     </header>
     <section>
-      <charts4ng-chords *ngIf="data$ | async as data" [data]="data.matrix" [legend]="data.legends"></charts4ng-chords>
+      <ng-container *ngIf="data$ | async as data else load">
+        <charts4ng-chords *ngIf="!empty" [data]="data.matrix" [legend]="data.legends"></charts4ng-chords>
+      </ng-container>
       <ng-template #load>
         <mat-spinner diameter="40"></mat-spinner>
       </ng-template>
+      <p *ngIf="empty" class="empty">There are no open issues or no labels on this repository</p>
     </section>
     <footer>
       <mat-progress-bar *ngIf="progress < 100" [mode]="loading ? 'query' : 'determinate'" [value]="progress"></mat-progress-bar>
     </footer>
   `,
   styleUrls: ['../card.component.scss'],
+  styles: [`
+    .empty {
+      margin: 0;
+      max-width: 50%;
+      text-align: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      line-height: 1.5;
+      font-weight: 300;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LabelsComponent implements OnInit {
@@ -72,6 +88,7 @@ export class LabelsComponent implements OnInit {
   owner: string;
   name: string;
 
+  empty = false;
   loading = true;
   stopped = false;
   loadedCount = 0;
@@ -102,6 +119,7 @@ export class LabelsComponent implements OnInit {
     private issuesGQL: IssuesGQL,
     private moreIssuesGQL: MoreIssuesGQL,
     private labelsGQL: LabelsGQL,
+    private moreLabelsGQL: MoreLabelsGQL,
     private route: ActivatedRoute
   ) {
     this.focused = this.dashboard.focused$;
@@ -129,10 +147,13 @@ export class LabelsComponent implements OnInit {
   init() {
     this.issues$ = this.loadIssues().pipe(
       takeUntil(this.stopLoading.asObservable()),
-      map(issues => issues.filter(issue => !issue.closed))
+      map(issues => issues.filter(issue => !issue.closed)),
+      tap(issues => this.empty = issues.length === 0)
     );
 
-    this.labels$ = this.loadLabels();
+    this.labels$ = this.loadLabels().pipe(
+      tap(labels => this.empty = labels.length === 0 ? true : this.empty)
+    );
 
     this.data$ =
       this.labels$.pipe(
@@ -227,8 +248,37 @@ export class LabelsComponent implements OnInit {
       { owner: this.owner, name: this.name },
     ).valueChanges.pipe(
       tap(result => this.loading = result.loading),
+      filter(result => !result.loading),
       map(result => result.data.repository.labels),
-      map(labels => labels.nodes.map(l => ({name: l.name, color: l.color})))
+      switchMap(labels => {
+        const labelObjs = labels.nodes.map(l => ({name: l.name, color: l.color}));
+        if (labels.pageInfo.hasNextPage) {
+          return this.loadMoreLabels(labels.pageInfo.endCursor).pipe(
+            map(newLabels => [...newLabels, ...labelObjs])
+          );
+        } else {
+          return of(labelObjs);
+        }
+      })
+    );
+  }
+
+  loadMoreLabels(cursor: string): Observable<Label[]> {
+    return this.moreLabelsGQL.watch(
+      { owner: this.owner, name: this.name, cursor }
+    ).valueChanges.pipe(
+      filter(result => !result.loading),
+      map(result => result.data.repository.labels),
+      switchMap(labels => {
+        const labelObjs = labels.nodes.map(l => ({name: l.name, color: l.color}));
+        if (labels.pageInfo.hasNextPage) {
+          return this.loadMoreLabels(labels.pageInfo.endCursor).pipe(
+            map(newLabels => [...newLabels, ...labelObjs])
+          );
+        } else {
+          return of(labelObjs);
+        }
+      })
     );
   }
 

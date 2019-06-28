@@ -1,0 +1,20 @@
+query Labels($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    nameWithOwner
+    object(expression: "master") {
+      ... on Commit {
+        history(first: 100, since: "2018-06-22T04:37:29Z") {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            additions
+            deletions
+            committedDate
+          }
+        }
+      }
+    }
+  }
+}
