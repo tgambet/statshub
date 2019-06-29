@@ -17,10 +17,18 @@ import * as d3 from 'd3';
   selector: 'charts4ng-calendar',
   template: `
     <svg class="calendar" #svg [attr.width]="width" [attr.height]="height">
-      <g class="days" [attr.transform]="daysTranslate()">
+      <g class="month-legend" [attr.transform]="monthsLegendTranslate()">
+        <text *ngFor="let month of months; let i = index" [attr.x]="i * 4.34524 * cellSize">{{ formatMonth(month) }}</text>
+      </g>
+      <g class="day-legend" [attr.transform]="daysLegendTranslate()">
+        <text text-anchor="end" dy="5">Mon</text>
+        <text text-anchor="end" [attr.dy]="2 * cellSize + 5">Wed</text>
+        <text text-anchor="end" [attr.dy]="4 * cellSize + 5">Fri</text>
+      </g>
+      <g [attr.transform]="daysTranslate()">
         <rect class="day" *ngFor="let d of data; trackBy: trackBy" [attr.height]="cellSize" [attr.width]="cellSize"
               [attr.y]="getY(d)" [attr.x]="getX(d)" [attr.fill]="d.value === 0 ? '#606060' : color(d.value)">
-          <title>{{ d.date }} {{ format(d.value) }}</title>
+          <title>{{ formatDate(d.date) }}: {{ format(d.value) }}</title>
         </rect>
       </g>
     </svg>
@@ -30,12 +38,14 @@ import * as d3 from 'd3';
       height: 100%;
       width: 100%;
       font: 10px 'Roboto';
-      color: currentColor;
     }
     .calendar .day {
       stroke: #424242;
       stroke-width: 2;
       transition: color 300ms ease;
+    }
+    .calendar text {
+      fill: currentColor;
     }
   `],
   encapsulation: ViewEncapsulation.None,
@@ -57,9 +67,8 @@ export class CalendarComponent implements OnInit, OnChanges {
 
   cellSize = 16;
   minDate: Date;
+  months;
   color;
-
-  formatDay = d => 'SMTWTFS'[d.getUTCDay()];
 
   constructor(private cdr: ChangeDetectorRef) { }
 
@@ -83,9 +92,20 @@ export class CalendarComponent implements OnInit, OnChanges {
     this.height = this.svgRef.nativeElement.clientHeight;
     this.width = this.svgRef.nativeElement.clientWidth;
 
-    this.cellSize = Math.floor(this.width / 53);
+    this.cellSize = Math.floor((this.width - 25) / 53);
 
-    this.minDate = d3.min(this.data.map(d => d.date));
+    const dates = this.data.map(d => d.date)
+      .sort((a, b) => b.toISOString().localeCompare(a.toISOString()));
+
+    this.minDate = d3.min(dates);
+
+    const firstMonth = new Date(dates[dates.length - 1]);
+    firstMonth.setUTCMonth(firstMonth.getUTCMonth() + 1);
+
+    const lastMonth = new Date(dates[0]);
+    lastMonth.setUTCMonth(lastMonth.getUTCMonth() + 1);
+
+    this.months = d3.utcMonths(d3.utcMonth(firstMonth), d3.utcMonth(lastMonth));
 
     const sortedValues = this.data.map(d => d.value).sort((a, b) => b - a);
 
@@ -114,7 +134,15 @@ export class CalendarComponent implements OnInit, OnChanges {
   }
 
   daysTranslate() {
-    return `translate(${0.5}, ${(this.height - 7 * this.cellSize) / 2})`;
+    return `translate(${25}, ${(this.height - 7 * this.cellSize) / 2})`;
+  }
+
+  daysLegendTranslate() {
+    return `translate(${20}, ${(this.height - 7 * this.cellSize) / 2 + 1.5 * this.cellSize})`;
+  }
+
+  monthsLegendTranslate() {
+    return `translate(${25 + 3 * this.cellSize}, ${(this.height - 7 * this.cellSize) / 2 - 10})`;
   }
 
 }
