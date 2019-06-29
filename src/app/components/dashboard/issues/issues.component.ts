@@ -77,7 +77,7 @@ export class IssuesComponent implements OnInit {
   data$: Observable<{ date: Date; value: number; }[][]>;
   legends = [
     { name: 'Open issues', color: '#ff5252' },
-    { name: 'Closed issues', color: '#8bc34a' }
+    { name: 'Closed issues', color: '#64dd22' }
   ];
 
   errors: string[] = [];

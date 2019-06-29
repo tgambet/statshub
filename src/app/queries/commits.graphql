@@ -1,6 +1,5 @@
 query Commits($owner: String!, $name: String!, $since: GitTimestamp!) {
   repository(owner: $owner, name: $name) {
-    nameWithOwner
     object(expression: "master") {
       ... on Commit {
         history(first: 100, since: $since) {

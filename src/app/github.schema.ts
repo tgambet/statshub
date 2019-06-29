@@ -9886,16 +9886,55 @@ export type MoreCommitsQueryVariables = {
   owner: Scalars["String"];
   name: Scalars["String"];
   cursor: Scalars["String"];
+  since?: Maybe<Scalars["GitTimestamp"]>;
 };
 
 export type MoreCommitsQuery = { __typename?: "Query" } & {
   repository: Maybe<
-    { __typename?: "Repository" } & Pick<Repository, "nameWithOwner"> & {
-        object: Maybe<
-          { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
-            __typename?: "Commit";
-          } & {
-            history: { __typename?: "CommitHistoryConnection" } & {
+    { __typename?: "Repository" } & {
+      object: Maybe<
+        { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
+          __typename?: "Commit";
+        } & {
+          history: { __typename?: "CommitHistoryConnection" } & {
+            pageInfo: { __typename?: "PageInfo" } & Pick<
+              PageInfo,
+              "hasNextPage" | "endCursor"
+            >;
+            nodes: Maybe<
+              Array<
+                Maybe<
+                  { __typename?: "Commit" } & Pick<
+                    Commit,
+                    "additions" | "deletions" | "committedDate"
+                  >
+                >
+              >
+            >;
+          };
+        })
+      >;
+    }
+  >;
+};
+
+export type CommitsQueryVariables = {
+  owner: Scalars["String"];
+  name: Scalars["String"];
+  since: Scalars["GitTimestamp"];
+};
+
+export type CommitsQuery = { __typename?: "Query" } & {
+  repository: Maybe<
+    { __typename?: "Repository" } & {
+      object: Maybe<
+        { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
+          __typename?: "Commit";
+        } & {
+          history: { __typename?: "CommitHistoryConnection" } & Pick<
+            CommitHistoryConnection,
+            "totalCount"
+          > & {
               pageInfo: { __typename?: "PageInfo" } & Pick<
                 PageInfo,
                 "hasNextPage" | "endCursor"
@@ -9911,47 +9950,9 @@ export type MoreCommitsQuery = { __typename?: "Query" } & {
                 >
               >;
             };
-          })
-        >;
-      }
-  >;
-};
-
-export type CommitsQueryVariables = {
-  owner: Scalars["String"];
-  name: Scalars["String"];
-  since: Scalars["GitTimestamp"];
-};
-
-export type CommitsQuery = { __typename?: "Query" } & {
-  repository: Maybe<
-    { __typename?: "Repository" } & Pick<Repository, "nameWithOwner"> & {
-        object: Maybe<
-          { __typename?: "Commit" | "Tree" | "Blob" | "Tag" } & ({
-            __typename?: "Commit";
-          } & {
-            history: { __typename?: "CommitHistoryConnection" } & Pick<
-              CommitHistoryConnection,
-              "totalCount"
-            > & {
-                pageInfo: { __typename?: "PageInfo" } & Pick<
-                  PageInfo,
-                  "hasNextPage" | "endCursor"
-                >;
-                nodes: Maybe<
-                  Array<
-                    Maybe<
-                      { __typename?: "Commit" } & Pick<
-                        Commit,
-                        "additions" | "deletions" | "committedDate"
-                      >
-                    >
-                  >
-                >;
-              };
-          })
-        >;
-      }
+        })
+      >;
+    }
   >;
 };
 
@@ -10373,12 +10374,16 @@ export type ViewerQuery = { __typename?: "Query" } & {
 };
 
 export const MoreCommitsDocument = gql`
-  query MoreCommits($owner: String!, $name: String!, $cursor: String!) {
+  query MoreCommits(
+    $owner: String!
+    $name: String!
+    $cursor: String!
+    $since: GitTimestamp
+  ) {
     repository(owner: $owner, name: $name) {
-      nameWithOwner
       object(expression: "master") {
         ... on Commit {
-          history(first: 100, after: $cursor) {
+          history(first: 100, after: $cursor, since: $since) {
             pageInfo {
               hasNextPage
               endCursor
@@ -10407,7 +10412,6 @@ export class MoreCommitsGQL extends Apollo.Query<
 export const CommitsDocument = gql`
   query Commits($owner: String!, $name: String!, $since: GitTimestamp!) {
     repository(owner: $owner, name: $name) {
-      nameWithOwner
       object(expression: "master") {
         ... on Commit {
           history(first: 100, since: $since) {

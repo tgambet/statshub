@@ -18,7 +18,7 @@ import * as d3 from 'd3';
   template: `
     <svg class="chords" #svg [attr.viewBox]="(- width / 2) + ' ' + (- height / 2) + ' ' + width + ' ' + height">
       <g class="ribbons">
-        <path *ngFor="let chord of chords" [attr.d]="ribbon(chord)" [attr.fill]="color(chord.source.index)"></path>
+        <path *ngFor="let chord of chords" [attr.d]="ribbon(chord)" [attr.fill]="color(chord.target.index)"></path>
       </g>
       <g class="groups">
         <g class="group" *ngFor="let group of chords.groups">

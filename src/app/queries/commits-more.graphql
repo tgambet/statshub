@@ -1,9 +1,8 @@
-query MoreCommits($owner: String!, $name: String!, $cursor: String!) {
+query MoreCommits($owner: String!, $name: String!, $cursor: String!, $since: GitTimestamp) {
   repository(owner: $owner, name: $name) {
-    nameWithOwner
     object(expression: "master") {
       ... on Commit {
-        history(first: 100, after: $cursor) {
+        history(first: 100, after: $cursor, since: $since) {
           pageInfo {
             hasNextPage
             endCursor

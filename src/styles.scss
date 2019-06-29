@@ -5,8 +5,8 @@
 @include mat-core();
 
 $dark-theme: mat-dark-theme(
-    mat-palette($mat-light-green),
-    mat-palette($mat-light-blue, 300),
+    mat-palette($mat-light-green, A400),
+    mat-palette($mat-light-blue, A400),
     mat-palette($mat-deep-orange, A200)
 );
 

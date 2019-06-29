@@ -45,7 +45,8 @@ interface Commit {
       </mat-menu>
     </header>
     <section>
-      <ng-container *ngIf="commit$ | async as commits else load">
+      <ng-container *ngIf="data$ | async as data else load">
+        <charts4ng-calendar [data]="data"></charts4ng-calendar>
       </ng-container>
       <ng-template #load>
         <mat-spinner diameter="40"></mat-spinner>
@@ -71,11 +72,13 @@ export class CalendarComponent implements OnInit {
   stopLoading: EventEmitter<void> = new EventEmitter();
 
   commitCount: number;
-  commit$: Observable<any[]>;
+  commits$: Observable<Commit[]>;
 
-  data$: Observable<any[]>;
+  data$: Observable<{ date: Date, value: number }[]>;
 
   errors: string[] = [];
+
+  oneYearAgo: Date;
 
   get progress() {
     return this.commitCount > 0 ? this.loadedCount / this.commitCount * 100 : 100;
@@ -125,22 +128,53 @@ export class CalendarComponent implements OnInit {
       throw Error('owner or name is null!');
     }
 
+    this.oneYearAgo = new Date();
+    this.oneYearAgo.setFullYear(this.oneYearAgo.getFullYear() - 1);
+    this.oneYearAgo.setHours(0, 0, 0);
+
     this.init();
   }
 
   init() {
-    this.commit$ = this.loadCommits().pipe(
+    this.commits$ = this.loadCommits().pipe(
       takeUntil(this.stopLoading.asObservable())
+    );
+
+    this.data$ = this.commits$.pipe(
+      map(commits => {
+
+        const commitsMap = new Map();
+
+        commits.forEach(commit => {
+          const date = commit.committedOn.toDateString();
+          if (commitsMap.get(date) !== undefined) {
+            commitsMap.set(date, commitsMap.get(date) + 1);
+          } else {
+            commitsMap.set(date, 1);
+          }
+        });
+
+        const now = new Date();
+        for (const d = new Date(this.oneYearAgo); d <= now; d.setDate(d.getDate() + 1)) {
+          if (commitsMap.get(d.toDateString()) === undefined) {
+            commitsMap.set(d.toDateString(), 0);
+          }
+        }
+
+        return [...commitsMap.entries()].map(a => ({
+          date: new Date(a[0]),
+          value: a[1]
+        }));
+
+      }),
+      // tap(data => console.log(data))
     );
   }
 
   loadCommits(): Observable<Commit[]> {
 
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
     return this.commitsGQL.watch({
-      owner: this.owner, name: this.name, since: oneYearAgo.toISOString()
+      owner: this.owner, name: this.name, since: this.oneYearAgo.toISOString()
     }).valueChanges.pipe(
       tap(result => this.loading = result.loading),
       filter(result => !result.loading),
@@ -168,7 +202,7 @@ export class CalendarComponent implements OnInit {
 
   loadMoreCommits(cursor: string): Observable<Commit[]> {
     return this.moreCommitsGQL.watch(
-      { owner: this.owner, name: this.name, cursor }
+      { owner: this.owner, name: this.name, cursor, since: this.oneYearAgo.toISOString() }
     ).valueChanges.pipe(
       filter(result => !result.loading),
       map(result => result.data.repository.object.history),

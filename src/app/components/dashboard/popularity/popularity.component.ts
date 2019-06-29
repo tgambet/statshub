@@ -95,8 +95,8 @@ export class PopularityComponent implements OnInit {
 
   data$: Observable<{ date: Date; value: number; }[][]>;
   legends = [
-    { name: 'Stars', color: '#ffab00' },
-    { name: 'Forks', color: 'steelblue' }
+    { name: 'Stars', color: '#64dd22' },
+    { name: 'Forks', color: '#00b0ff' }
   ];
 
   errors: string[] = [];
