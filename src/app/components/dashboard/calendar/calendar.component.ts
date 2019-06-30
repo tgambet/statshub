@@ -129,8 +129,8 @@ export class CalendarComponent implements OnInit {
     }
 
     this.oneYearAgo = new Date();
-    this.oneYearAgo.setFullYear(this.oneYearAgo.getFullYear() - 1);
-    this.oneYearAgo.setHours(0, 0, 0);
+    this.oneYearAgo.setUTCFullYear(this.oneYearAgo.getUTCFullYear() - 1);
+    this.oneYearAgo.setUTCHours(0, 0, 0);
 
     this.init();
   }
@@ -155,16 +155,19 @@ export class CalendarComponent implements OnInit {
         });
 
         const now = new Date();
-        for (const d = new Date(this.oneYearAgo); d <= now; d.setDate(d.getDate() + 1)) {
+        for (const d = new Date(this.oneYearAgo); d <= now; d.setUTCDate(d.getUTCDate() + 1)) {
           if (commitsMap.get(d.toDateString()) === undefined) {
             commitsMap.set(d.toDateString(), 0);
           }
         }
 
-        return [...commitsMap.entries()].map(a => ({
-          date: new Date(a[0]),
-          value: a[1]
-        }));
+        return [...commitsMap.entries()].map(a => {
+          const date = new Date(a[0]);
+          return {
+            date,
+            value: a[1]
+          };
+        });
 
       }),
       // tap(data => console.log(data))
