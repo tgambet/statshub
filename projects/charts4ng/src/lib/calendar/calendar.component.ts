@@ -92,7 +92,7 @@ export class CalendarComponent implements OnInit, OnChanges {
     this.height = this.svgRef.nativeElement.clientHeight;
     this.width = this.svgRef.nativeElement.clientWidth;
 
-    this.cellSize = Math.floor((this.width - 25) / 53);
+    this.cellSize = Math.floor((this.width - 35) / 53);
 
     const dates = this.data.map(d => d.date)
       .sort((a, b) => b.toISOString().localeCompare(a.toISOString()));
@@ -134,7 +134,7 @@ export class CalendarComponent implements OnInit, OnChanges {
   }
 
   daysTranslate() {
-    return `translate(${25}, ${(this.height - 7 * this.cellSize) / 2})`;
+    return `translate(${30}, ${(this.height - 7 * this.cellSize) / 2})`;
   }
 
   daysLegendTranslate() {
