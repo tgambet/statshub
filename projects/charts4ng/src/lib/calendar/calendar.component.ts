@@ -42,7 +42,7 @@ import * as d3 from 'd3';
     .calendar .day {
       stroke: #424242;
       stroke-width: 2;
-      transition: color 300ms ease;
+      transition: fill 300ms ease;
     }
     .calendar text {
       fill: currentColor;
