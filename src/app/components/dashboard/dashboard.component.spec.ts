@@ -1,9 +1,8 @@
-import {LayoutModule} from '@angular/cdk/layout';
 import {NoopAnimationsModule} from '@angular/platform-browser/animations';
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
-import {MatButtonModule, MatCardModule, MatGridListModule, MatIconModule, MatMenuModule} from '@angular/material';
 
 import {DashboardComponent} from './dashboard.component';
+import {SharedModule} from '@app/shared/shared.module';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
@@ -14,12 +13,7 @@ describe('DashboardComponent', () => {
       declarations: [DashboardComponent],
       imports: [
         NoopAnimationsModule,
-        LayoutModule,
-        MatButtonModule,
-        MatCardModule,
-        MatGridListModule,
-        MatIconModule,
-        MatMenuModule,
+        SharedModule,
       ]
     }).compileComponents();
   }));

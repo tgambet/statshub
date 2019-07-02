@@ -43,6 +43,11 @@ describe('AuthService', () => {
         viewer: {
           name: 'Thomas',
           login: 'tgambet'
+        },
+        rateLimit: {
+          limit: 5000,
+          remaining: 4900,
+          resetAt: '2019-07-02T09:46:58Z'
         }
       }
     });
@@ -61,6 +66,11 @@ describe('AuthService', () => {
         viewer: {
           name: 'Thomas',
           login: 'tgambet'
+        },
+        rateLimit: {
+          limit: 5000,
+          remaining: 4900,
+          resetAt: '2019-07-02T09:46:58Z'
         }
       }
     });
@@ -78,6 +88,11 @@ describe('AuthService', () => {
         viewer: {
           name: 'Thomas',
           login: 'tgambet'
+        },
+        rateLimit: {
+          limit: 5000,
+          remaining: 4900,
+          resetAt: '2019-07-02T09:46:58Z'
         }
       }
     });

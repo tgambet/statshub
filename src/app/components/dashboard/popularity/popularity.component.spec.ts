@@ -1,6 +1,11 @@
 import {async, ComponentFixture, TestBed} from '@angular/core/testing';
 
 import {PopularityComponent} from './popularity.component';
+import {Charts4ngModule} from 'charts4ng';
+import {SharedModule} from '@app/shared/shared.module';
+import {RouterTestingModule} from '@angular/router/testing';
+import {ApolloTestingModule} from 'apollo-angular/testing';
+import {ActivatedRoute, convertToParamMap} from '@angular/router';
 
 describe('PopularityComponent', () => {
   let component: PopularityComponent;
@@ -8,7 +13,19 @@ describe('PopularityComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ PopularityComponent ]
+      imports: [RouterTestingModule, ApolloTestingModule, Charts4ngModule, SharedModule],
+      declarations: [ PopularityComponent ],
+      providers: [{
+        provide: ActivatedRoute,
+        useValue: {
+          snapshot: {
+            paramMap: convertToParamMap({
+              user: 'angular',
+              repo: 'angular'
+            })
+          }
+        }
+      }]
     })
     .compileComponents();
   }));
